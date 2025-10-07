@@ -14,10 +14,9 @@ import (
 // @BasePath /api
 // @schemes http
 func main() {
-
 	app := fiber.New()
-
 	app.Get("/swagger/*", swagger.HandlerDefault)
 	routes.InitRoutes(app)
 	app.Listen(":8080")
+
 }
