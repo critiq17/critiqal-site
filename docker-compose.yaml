@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgres:16.4-alpine
+    ports:
+      - "6433:5432"
+    environment:
+      POSTGRES_DB: critiqal_web_site
+      POSTGRES_USER: critiqal
+      POSTGRES_PASSWORD: critiqal
