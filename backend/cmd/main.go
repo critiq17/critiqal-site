@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/critiq17/critiqal-site/config"
 	_ "github.com/critiq17/critiqal-site/docs"
-	"github.com/critiq17/critiqal-site/internal/routes"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/swagger"
+	"github.com/critiq17/critiqal-site/internal/db"
 )
 
 // @title Critiqal API
@@ -14,9 +13,8 @@ import (
 // @BasePath /api
 // @schemes http
 func main() {
-	app := fiber.New()
-	app.Get("/swagger/*", swagger.HandlerDefault)
-	routes.InitRoutes(app)
-	app.Listen(":8080")
 
+	cfg := config.LoadConfig()
+
+	db.Must(&cfg.DatabaseConfig)
 }
