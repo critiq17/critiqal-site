@@ -1,14 +1,17 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/critiq17/critiqal-site/config"
 	_ "github.com/critiq17/critiqal-site/docs"
 	"github.com/critiq17/critiqal-site/internal/db"
+	"github.com/critiq17/critiqal-site/internal/repository"
 )
 
 // @title Critiqal API
 // @version 1.0
-// @description This is the API for Critiqal web-site
+// @description This is  the API for Critiqal web-site
 // @host localhost:8080
 // @BasePath /api
 // @schemes http
@@ -16,5 +19,8 @@ func main() {
 
 	cfg := config.LoadConfig()
 
-	db.Must(&cfg.DatabaseConfig)
+	db := db.Must(&cfg.DatabaseConfig)
+
+	userRepo := repository.NewRepository(db.DB)
+	fmt.Println(userRepo.GetUsers())
 }
