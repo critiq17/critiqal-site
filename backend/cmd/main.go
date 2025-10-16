@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/critiq17/critiqal-site/config"
 	_ "github.com/critiq17/critiqal-site/docs"
@@ -30,7 +31,17 @@ func main() {
 	}
 
 	userRepo := repository.NewRepository(db.DB)
-	userRepo.AddUser(user)
+
+	err := userRepo.AddUser(user)
+	if err != nil {
+		log.Printf("error creating user: %v", err)
+	}
+
+	err = userRepo.SoftDelete(user.ID)
+	if err != nil {
+		log.Printf("error delete user: %v", err)
+	}
+
 	fmt.Println(userRepo.GetUsers())
 
 }

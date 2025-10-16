@@ -26,6 +26,10 @@ func (r *UserRepository) AddUser(user *models.User) error {
 	return nil
 }
 
+func (r *UserRepository) SoftDelete(id string) error {
+	return r.db.Where("id = ?", id).Delete(&models.User{}).Error
+}
+
 func (r *UserRepository) GetUsers() (*[]models.User, error) {
 	var models []models.User
 
