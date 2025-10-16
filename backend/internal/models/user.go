@@ -7,18 +7,18 @@ import (
 )
 
 type User struct {
-	EncryptedID string `gorm:"uniqueIndex;size:64"`
-	Username    string `gorm:"uniqueIndex;not null"`
-	Email       string `gorm:"uniqueIndex;not null"`
-	Password    string `gorm:"not null"`
-	FirstName   string
-	LastName    string
-	CreatedAt   int64          `gorm:"autoCreateTime:milli"`
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
+	ID        string `gorm:"primaryKey;size:64"`
+	Username  string `gorm:"uniqueIndex;not null"`
+	Email     string `gorm:"uniqueIndex;not null"`
+	Password  string `gorm:"not null"`
+	FirstName string
+	LastName  string
+	CreatedAt int64          `gorm:"autoCreateTime:milli"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	u.EncryptedID = uuid.NewString()
+	u.ID = uuid.NewString()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
