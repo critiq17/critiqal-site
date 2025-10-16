@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"log"
+
 	"github.com/critiq17/critiqal-site/internal/models"
 	"gorm.io/gorm"
 )
@@ -13,6 +15,15 @@ func NewRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{
 		db: db,
 	}
+}
+
+func (r *UserRepository) AddUser(user *models.User) error {
+	err := r.db.Create(user).Error
+	if err != nil {
+		log.Printf("error creating user: %s", err)
+	}
+
+	return nil
 }
 
 func (r *UserRepository) GetUsers() (*[]models.User, error) {
