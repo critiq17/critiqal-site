@@ -3,7 +3,7 @@ package repository
 import (
 	"log"
 
-	"github.com/critiq17/critiqal-site/internal/models"
+	"github.com/critiq17/critiqal-site/internal/dto/models"
 	"gorm.io/gorm"
 )
 

@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/critiq17/critiqal-site/config"
 	_ "github.com/critiq17/critiqal-site/docs"
 	"github.com/critiq17/critiqal-site/internal/db"
-	"github.com/critiq17/critiqal-site/internal/models"
+	"github.com/critiq17/critiqal-site/internal/dto/api"
+	"github.com/critiq17/critiqal-site/internal/dto/models"
 	"github.com/critiq17/critiqal-site/internal/repository"
 )
 
@@ -32,15 +32,16 @@ func main() {
 
 	userRepo := repository.NewRepository(db.DB)
 
-	err := userRepo.AddUser(user)
-	if err != nil {
-		log.Printf("error creating user: %v", err)
-	}
+	//err := userRepo.AddUser(user)
+	//if err != nil {
+	//	log.Printf("error creating user: %v", err)
+	//}
 
-	err = userRepo.SoftDelete(user.ID)
-	if err != nil {
-		log.Printf("error delete user: %v", err)
-	}
+	//err = userRepo.SoftDelete(user.ID)
+	//if err != nil {
+	//	log.Printf("error delete user: %v", err)
+	//
+	fmt.Println(api.ToUserApi(user))
 
 	fmt.Println(userRepo.GetUsers())
 

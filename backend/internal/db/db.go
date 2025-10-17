@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/critiq17/critiqal-site/config"
-	"github.com/critiq17/critiqal-site/internal/models"
+	"github.com/critiq17/critiqal-site/internal/dto/models"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
