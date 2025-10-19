@@ -2,6 +2,6 @@ package handlers
 
 import "github.com/gofiber/fiber/v2"
 
-func HandleMessage(c *fiber.Ctx) error {
+func GetUsers(app *fiber.App) error {
 	return nil
 }

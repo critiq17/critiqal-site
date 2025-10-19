@@ -3,7 +3,7 @@ package repository
 import (
 	"log"
 
-	"github.com/critiq17/critiqal-site/internal/dto/models"
+	"github.com/critiq17/critiqal-site/internal/domain/user/dto"
 	"gorm.io/gorm"
 )
 
@@ -17,7 +17,7 @@ func NewRepository(db *gorm.DB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) AddUser(user *models.User) error {
+func (r *UserRepository) AddUser(user *dto.User) error {
 	err := r.db.Create(user).Error
 	if err != nil {
 		log.Printf("error creating user: %s", err)
@@ -27,11 +27,11 @@ func (r *UserRepository) AddUser(user *models.User) error {
 }
 
 func (r *UserRepository) SoftDelete(id string) error {
-	return r.db.Where("id = ?", id).Delete(&models.User{}).Error
+	return r.db.Where("id = ?", id).Delete(&dto.User{}).Error
 }
 
-func (r *UserRepository) GetUsers() (*[]models.User, error) {
-	var models []models.User
+func (r *UserRepository) GetUsers() (*[]dto.User, error) {
+	var models []dto.User
 
 	err := r.db.
 		Where("deleted_at IS NULL").
