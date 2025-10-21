@@ -17,7 +17,7 @@ func NewRepository(db *gorm.DB) *UserRepository {
 	}
 }
 
-func (r *UserRepository) AddUser(user *dto.User) error {
+func (r *UserRepository) Create(user *dto.User) error {
 	err := r.db.Create(user).Error
 	if err != nil {
 		log.Printf("error creating user: %s", err)
@@ -26,7 +26,7 @@ func (r *UserRepository) AddUser(user *dto.User) error {
 	return nil
 }
 
-func (r *UserRepository) SoftDelete(id string) error {
+func (r *UserRepository) Delete(id string) error {
 	return r.db.Where("id = ?", id).Delete(&dto.User{}).Error
 }
 

@@ -1,7 +1,15 @@
 package handlers
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/critiq17/critiqal-site/internal/domain/user"
+)
 
-func GetUsers(app *fiber.App) error {
-	return nil
+type Handlers struct {
+	userRepo user.Repository
+}
+
+func NewHandlers(userRepo user.Repository) *Handlers {
+	return &Handlers{
+		userRepo: userRepo,
+	}
 }

@@ -15,10 +15,11 @@ import (
 // @schemes http
 func main() {
 
-	app, err := app.NewServer()
+	// run init server and DB
+	app, err := app.SetupApp()
 	if err != nil {
 		log.Fatalf("Error setup app")
 	}
-	app.Listen(":3000")
 
+	app.Listen(":3000")
 }
