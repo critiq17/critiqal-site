@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/critiq17/critiqal-site/internal/domain/user/dto"
 	"github.com/gofiber/fiber/v2"
 )
@@ -31,7 +33,22 @@ func (h *Handlers) AddUser(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) DeleteUser(c *fiber.Ctx) error {
-	return nil
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "id is required",
+		})
+	}
+
+	err := h.userRepo.Delete(id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("failed to delete user: %v", err),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+
 }
 
 func (h *Handlers) GetUsers() *[]dto.UserApi {
