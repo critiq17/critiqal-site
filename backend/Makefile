@@ -5,7 +5,9 @@
 APP_NAME := critiqal-site
 MAIN_PACKAGE := ./cmd/main.go
 GO := go
+SWAGGER := swag
 
+# --- Backend ---
 
 # Build the binary
 
@@ -24,3 +26,10 @@ run:
 clean:
 	@echo "Cleaning..."
 	rm -rf bin/*
+
+
+# --- Swagger ---
+
+swag:
+	@echo "Init swag..."
+	$(SWAGGER) init -g $(MAIN_PACKAGE)
