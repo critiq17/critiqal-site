@@ -1,11 +1,106 @@
 basePath: /api
+definitions:
+  dto.UserApi:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      username:
+        description: ID        string `json:"id" binding:"required"`
+        type: string
+    required:
+    - email
+    - username
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: This is the API for Critiqal web-site
+  description: This is  the API for Critiqal web-site
   title: Critiqal API
   version: "1.0"
-paths: {}
+paths:
+  /api/users:
+    post:
+      consumes:
+      - application/json
+      description: Created new user
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user created successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Created User
+      tags:
+      - users
+  /users:
+    get:
+      description: Return all users from db
+      responses:
+        "200":
+          description: StatusOK
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all users
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Deletes a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete user
+      tags:
+      - users
 schemes:
 - http
 swagger: "2.0"
