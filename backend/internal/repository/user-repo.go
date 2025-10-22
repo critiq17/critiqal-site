@@ -30,7 +30,7 @@ func (r *UserRepository) Delete(id string) error {
 	return r.db.Where("id = ?", id).Delete(&dto.User{}).Error
 }
 
-func (r *UserRepository) GetUsers() (*[]dto.User, error) {
+func (r *UserRepository) GetUsers() ([]dto.User, error) {
 	var models []dto.User
 
 	err := r.db.
@@ -42,5 +42,5 @@ func (r *UserRepository) GetUsers() (*[]dto.User, error) {
 		return nil, err
 	}
 
-	return &models, nil
+	return models, nil
 }

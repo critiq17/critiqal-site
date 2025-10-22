@@ -1,7 +1,7 @@
 package dto
 
 type UserApi struct {
-	ID        string `json:"id" binding:"required"`
+	//ID        string `json:"id" binding:"required"`
 	Username  string `json:"username" binding:"required"`
 	Email     string `json:"email" binding:"required"`
 	Password  string `json:"password"`
