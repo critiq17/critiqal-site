@@ -21,4 +21,9 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		users.Delete("/:id", handlers.DeleteUser)
 		users.Get("/", handlers.GetUsers)
 	}
+
+	auth := api.Group("/auth")
+	{
+		auth.Post("/sign-up", handlers.SignUp)
+	}
 }
