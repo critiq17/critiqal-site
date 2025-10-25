@@ -1,5 +1,5 @@
 package user
 
 type UserService interface {
-	// repo Repository
+	//repo Repository
 }

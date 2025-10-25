@@ -16,19 +16,3 @@ type CreateRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 }
-
-/*func ToUserApi(u *models.User) *UserApi {
-	if u == nil {
-		return nil
-	}
-
-	return &UserApi{
-		ID:        u.ID,
-		Username:  u.Username,
-		Email:     u.Email,
-		Password:  u.Password,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-	}
-}
-*/
