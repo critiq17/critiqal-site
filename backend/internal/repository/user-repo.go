@@ -44,3 +44,16 @@ func (r *UserRepository) GetUsers() ([]dto.User, error) {
 
 	return models, nil
 }
+
+func (r *UserRepository) GetUserByUsername(username string) (*dto.User, error) {
+
+	var model dto.User
+
+	err := r.db.Where("username = ? AND deleted_at IS NULL", username).Find(&model).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &model, nil
+}

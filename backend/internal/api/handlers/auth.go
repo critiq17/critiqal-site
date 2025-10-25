@@ -1,15 +1,17 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/critiq17/critiqal-site/internal/domain/user/dto"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 type SignInInput struct {
 	Username string `json:"username" binding:"required"`
-	Password string `json:"username" binding:"requireds"`
+	Password string `json:"password" binding:"requireds"`
 }
 
 func (h *Handlers) SignUp(c *fiber.Ctx) error {
@@ -37,4 +39,44 @@ func (h *Handlers) SignUp(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(u)
+}
+
+func (h *Handlers) SignIn(c *fiber.Ctx) error {
+
+	var input SignInInput
+
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	user, err := h.userRepo.GetUserByUsername(input.Username)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "user not found",
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to query user",
+		})
+
+	}
+
+	if !user.CheckPassword(input.Password) {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid credentials",
+		})
+	}
+
+	safeUser := &dto.UserApi{
+		Username:  user.Username,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	return c.Status(fiber.StatusOK).JSON(safeUser)
 }
