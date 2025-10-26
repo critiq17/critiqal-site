@@ -5,6 +5,7 @@ import (
 	"github.com/critiq17/critiqal-site/internal/api/handlers"
 	"github.com/critiq17/critiqal-site/internal/api/routes"
 	"github.com/critiq17/critiqal-site/internal/db"
+	"github.com/critiq17/critiqal-site/internal/domain/user"
 	"github.com/critiq17/critiqal-site/internal/logger"
 	"github.com/critiq17/critiqal-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +20,7 @@ func SetupApp() (*fiber.App, error) {
 	db := db.Must(&cfg.DatabaseConfig)
 
 	userRepo := repository.NewRepository(db.DB)
+	service := user.NewUserService(userRepo)
 
 	app := fiber.New()
 
@@ -27,7 +29,7 @@ func SetupApp() (*fiber.App, error) {
 		AllowHeaders: "Origins, Content-Type, Accept",
 	}))
 
-	handlers := handlers.NewHandlers(userRepo)
+	handlers := handlers.NewHandlers(userRepo, *service)
 	routes.InitRoutes(app, handlers)
 
 	log.Info("Success init db, handlers, and more")

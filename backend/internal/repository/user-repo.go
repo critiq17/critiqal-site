@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"log"
-
 	"github.com/critiq17/critiqal-site/internal/domain/user/dto"
 	"gorm.io/gorm"
 )
@@ -20,7 +18,7 @@ func NewRepository(db *gorm.DB) *UserRepository {
 func (r *UserRepository) Create(user *dto.User) error {
 	err := r.db.Create(user).Error
 	if err != nil {
-		log.Printf("error creating user: %s", err)
+		return err
 	}
 
 	return nil
