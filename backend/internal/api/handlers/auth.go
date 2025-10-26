@@ -24,21 +24,13 @@ func (h *Handlers) SignUp(c *fiber.Ctx) error {
 		})
 	}
 
-	u := dto.User{
-		Username:  input.Username,
-		Email:     input.Email,
-		Password:  input.Password,
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-	}
-
-	if err := h.userRepo.Create(&u); err != nil {
+	if err := h.service.CreateUser(&input); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "error creating user",
 		})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(u)
+	return c.Status(fiber.StatusCreated).JSON(input)
 }
 
 func (h *Handlers) SignIn(c *fiber.Ctx) error {
