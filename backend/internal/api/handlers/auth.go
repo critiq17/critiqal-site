@@ -8,10 +8,21 @@ import (
 )
 
 type SignInInput struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"requireds"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
+// Sign-up godoc
+// @Summary      Register
+// @Description  Register new user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        user            body      dto.UserApi  true  "User data"
+// @Success      201  {object}   map[string]interface{}    "user created successfuly"
+// @Failure      400  {object}   map[string]string         "bad request"
+// @Failure      500  {object}   map[string]string         "internal server error"
+// @Router       /auth/sign-up [post]
 func (h *Handlers) SignUp(c *fiber.Ctx) error {
 
 	var input dto.UserApi
@@ -33,6 +44,17 @@ func (h *Handlers) SignUp(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(input)
 }
 
+// Sign-in godoc:
+// @Summary      Auth
+// @Description  Auth if user created
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        user            body      SignInInput  true  "User data"
+// @Success      201  {object}   map[string]interface{}    "user auth successfuly"
+// @Failure      400  {object}   map[string]string         "bad request"
+// @Failure      500  {object}   map[string]string         "internal server error"
+// @Router       /auth/sign-in [post]
 func (h *Handlers) SignIn(c *fiber.Ctx) error {
 
 	var input SignInInput
