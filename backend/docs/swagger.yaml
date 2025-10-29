@@ -11,11 +11,17 @@ definitions:
       password:
         type: string
       username:
-        description: ID        string `json:"id" binding:"required"`
         type: string
     required:
     - email
     - username
+    type: object
+  handlers.SignInInput:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -59,6 +65,76 @@ paths:
       summary: Created User
       tags:
       - users
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Auth if user created
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignInInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user auth successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Auth
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Register new user
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user created successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register
+      tags:
+      - auth
   /users:
     get:
       description: Return all users from db

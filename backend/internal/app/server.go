@@ -5,9 +5,10 @@ import (
 	"github.com/critiq17/critiqal-site/internal/api/handlers"
 	"github.com/critiq17/critiqal-site/internal/api/routes"
 	"github.com/critiq17/critiqal-site/internal/db"
-	"github.com/critiq17/critiqal-site/internal/domain/user"
-	"github.com/critiq17/critiqal-site/internal/logger"
+	"github.com/critiq17/critiqal-site/pkg/logger"
+
 	"github.com/critiq17/critiqal-site/internal/repository"
+	"github.com/critiq17/critiqal-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
@@ -20,7 +21,7 @@ func SetupApp() (*fiber.App, error) {
 	db := db.Must(&cfg.DatabaseConfig)
 
 	userRepo := repository.NewRepository(db.DB)
-	service := user.NewUserService(userRepo)
+	service := service.NewUserService(userRepo)
 
 	app := fiber.New()
 

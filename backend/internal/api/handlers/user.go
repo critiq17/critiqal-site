@@ -3,8 +3,8 @@ package handlers
 import (
 	"fmt"
 
+	"github.com/critiq17/critiqal-site/internal/api/dto"
 	"github.com/critiq17/critiqal-site/internal/domain/user"
-	"github.com/critiq17/critiqal-site/internal/domain/user/dto"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -28,7 +28,7 @@ func (h *Handlers) AddUser(c *fiber.Ctx) error {
 		})
 	}
 
-	u := dto.User{
+	u := user.User{
 		Username:  req.Username,
 		Email:     req.Email,
 		Password:  req.Password,
@@ -89,7 +89,7 @@ func (h *Handlers) GetUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	dtos := user.ToUsersApi(users)
+	dtos := dto.ToUsersApi(users)
 
 	return c.JSON(dtos)
 }
