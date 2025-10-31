@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/critiq17/critiqal-site/internal/domain/user"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +16,7 @@ type User struct {
 	Password  string `gorm:"not null"`
 	FirstName string
 	LastName  string
+	PhotoURL  string         `gorm:"default:null"`
 	CreatedAt int64          `gorm:"autoCreateTime:milli"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
@@ -30,6 +33,7 @@ func (m *User) toDomain() *user.User {
 		Password:  m.Password,
 		FirstName: m.FirstName,
 		LastName:  m.LastName,
+		PhotoURL:  m.PhotoURL,
 		CreatedAt: m.CreatedAt,
 		DeletedAt: m.DeletedAt,
 	}
@@ -50,6 +54,7 @@ func fromDomain(u *user.User) *User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		PhotoURL:  u.PhotoURL,
 		CreatedAt: u.CreatedAt,
 		DeletedAt: u.DeletedAt,
 	}
@@ -108,6 +113,14 @@ func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) 
 	}
 
 	return model.toDomain(), nil
+}
+
+func (r *UserRepository) UpdatePhoto(id, photo_url string) error {
+	if photo_url == "" {
+		return errors.New("photo_url is empty")
+	}
+
+	return r.db.Model(&User{}).Where("id = ?", id).Update("photo_url", photo_url).Error
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {

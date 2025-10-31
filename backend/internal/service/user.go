@@ -64,6 +64,10 @@ func (s *UserService) GetByUsername(username string) (*user.User, error) {
 	return u, nil
 }
 
+func (s *UserService) SetUserPhoto(id, photo_url string) error {
+	return s.repo.UpdatePhoto(id, photo_url)
+}
+
 func (s *UserService) Auth(username, password string) (*user.User, bool, error) {
 	user, err := s.repo.GetUserByUsername(username)
 	if err != nil {

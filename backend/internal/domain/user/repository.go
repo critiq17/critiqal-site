@@ -5,4 +5,5 @@ type Repository interface {
 	Delete(id string) error
 	GetUsers() ([]User, error)
 	GetUserByUsername(username string) (*User, error)
+	UpdatePhoto(id, photo_url string) error
 }
