@@ -8,7 +8,7 @@ type Service interface {
 	// GetUsers retrieves all users
 	GetUsers() ([]User, error)
 	// Set photo for user
-	SetUserPhoto(id, photo_url string) error
+	SetUserPhoto(username, photo_url string) error
 	// Get user by username
 	GetByUsername(username string) (User, error)
 }

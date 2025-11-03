@@ -9,7 +9,7 @@ func NewStorageFromEnv() (Storage, error) {
 	storageType := os.Getenv("STORAGE_TYPE")
 
 	switch storageType {
-	case "locla":
+	case "local":
 		return NewLocalStorage(
 			os.Getenv("LOCAL_PATH"),
 			os.Getenv("LOCAL_URL"),

@@ -102,6 +102,17 @@ func (r *UserRepository) GetUsers() ([]user.User, error) {
 	return toDomainUsers(models), nil
 }
 
+func (r *UserRepository) GetByID(id string) (*user.User, error) {
+	var model User
+
+	err := r.db.Where("id = ? AND deleted_at IS NULL", id).Find(&model).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return model.toDomain(), nil
+}
 func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) {
 
 	var model User
@@ -115,12 +126,12 @@ func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) 
 	return model.toDomain(), nil
 }
 
-func (r *UserRepository) UpdatePhoto(id, photo_url string) error {
+func (r *UserRepository) UpdatePhoto(username, photo_url string) error {
 	if photo_url == "" {
 		return errors.New("photo_url is empty")
 	}
 
-	return r.db.Model(&User{}).Where("id = ?", id).Update("photo_url", photo_url).Error
+	return r.db.Model(&User{}).Where("username = ?", username).Update("photo_url", photo_url).Error
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
