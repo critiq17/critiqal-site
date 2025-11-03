@@ -1,56 +1,87 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getUsers } from '$lib/api/users'
+  import { goto } from '$app/navigation';
+  import { getUser, uploadUserPhoto } from '$lib/api/users';
 
-  interface User {
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  }
-
-  let users: User[] = [];
-  let error = '';
-  let loading = true;
+  let user: any = {};
+  let newPhoto: File | null = null;
+  let previewUrl = '';
+  let username = '';
 
   onMount(async () => {
-    try {
-      users = await getUsers();
-    } catch (err) {
-      error = 'Failed to load users';
-    } finally {
-      loading = false;
+    // читаем юзернейм из localStorage только на клиенте
+    if (typeof window !== 'undefined') {
+      username = localStorage.getItem('username') || '';
+      if (!username) {
+        goto('/sign-in');
+        return;
+      }
+
+      try {
+        user = await getUser(username);
+      } catch (err) {
+        console.error('Error loading profile:', err);
+        goto('/sign-in');
+      }
     }
   });
+
+  function handleFileChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.length) {
+      newPhoto = target.files[0];
+      previewUrl = URL.createObjectURL(newPhoto);
+    }
+  }
+
+  async function uploadPhoto() {
+    if (!newPhoto || !username) return;
+    try {
+      const res = await uploadUserPhoto(username, newPhoto);
+      user.photo_url = res.url;
+      previewUrl = '';
+      newPhoto = null;
+    } catch {
+      alert('Error loading photo');
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('username');
+    goto('/sign-in');
+  }
 </script>
 
-<div class="p-8 bg-gray-50 min-h-screen">
-  <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+<div class="max-w-md mx-auto p-6">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Profile</h2>
+    <button on:click={logout} class="text-red-500 hover:text-red-700">
+      Log out
+    </button>
+  </div>
 
-  {#if loading}
-    <p>Loading users...</p>
-  {:else if error}
-    <p class="text-red-500">{error}</p>
-  {:else}
-    <table class="min-w-full bg-white shadow rounded-lg overflow-hidden">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="text-left p-3">Username</th>
-          <th class="text-left p-3">Email</th>
-          <th class="text-left p-3">First Name</th>
-          <th class="text-left p-3">Last Name</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each users as user}
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-3">{user.username}</td>
-            <td class="p-3">{user.email}</td>
-            <td class="p-3">{user.first_name}</td>
-            <td class="p-3">{user.last_name}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-  {/if}
+  <div class="flex flex-col items-center">
+    <img
+      src={previewUrl || user.photo_url || '/default-avatar.png'}
+      alt="avatar"
+      class="w-32 h-32 rounded-full object-cover border" height="150" width="150"
+    />
+
+    <input type="file" accept="image/*" on:change={handleFileChange} class="mt-4" />
+
+    {#if newPhoto}
+      <button
+        on:click={uploadPhoto}
+        class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        Upload
+      </button>
+    {/if}
+
+    <div class="mt-6 text-center">
+      <p class="text-lg font-semibold">{user.first_name} {user.last_name}</p>
+      <p class="text-gray-500">@{user.username}</p>
+      <p class="text-gray-400 mt-1">{user.email}</p>
+    </div>
+  </div>
 </div>

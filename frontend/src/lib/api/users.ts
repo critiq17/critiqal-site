@@ -1,5 +1,23 @@
 import { api } from './client';
 
-export async function getUsers() {
-  return api('/users', { method: 'GET' });
+export async function getUser(username: string) {
+  return api(`/users/${username}`);
+}
+
+export async function uploadUserPhoto(username: string, file: File) {
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  const res = await fetch(`http://localhost:8080/api/users/${username}/photo`, {
+    method: 'POST',
+    body: formData
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('Upload failed:', res.status, text);
+    throw new Error(`Upload error: ${res.status}`);
+  }
+
+  return res.json();
 }
