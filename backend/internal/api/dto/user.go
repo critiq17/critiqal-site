@@ -8,6 +8,7 @@ type UserApi struct {
 	Password  string `json:"password"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
+	PhotoURL  string `json:"photo_url"`
 }
 
 type CreateRequest struct {
@@ -28,6 +29,7 @@ func ToUserApi(u *user.User) *UserApi {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		PhotoURL:  u.PhotoURL,
 	}
 }
 
@@ -49,5 +51,7 @@ func ToDBModel(u *UserApi) *user.User {
 		Email:     u.Email,
 		Password:  u.Password,
 		FirstName: u.FirstName,
-		LastName:  u.LastName}
+		LastName:  u.LastName,
+		PhotoURL:  u.PhotoURL,
+	}
 }

@@ -9,6 +9,7 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+	PhotoURL  string
 	CreatedAt int64
 	DeletedAt gorm.DeletedAt
 }

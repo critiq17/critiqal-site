@@ -13,6 +13,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	// Swagger
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
+	app.Static("/uploads", "./uploads")
+
 	api := app.Group("/api")
 
 	users := api.Group("/users")
@@ -20,6 +22,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		users.Post("/", handlers.AddUser)
 		users.Delete("/:id", handlers.DeleteUser)
 		users.Get("/", handlers.GetUsers)
+		users.Post("/:username/photo", handlers.UploadPhoto)
+		users.Get("/:username", handlers.GetByUsername)
 	}
 
 	auth := api.Group("/auth")

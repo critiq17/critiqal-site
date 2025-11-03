@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/critiq17/critiqal-site/internal/domain/user"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -14,6 +16,7 @@ type User struct {
 	Password  string `gorm:"not null"`
 	FirstName string
 	LastName  string
+	PhotoURL  string         `gorm:"default:null"`
 	CreatedAt int64          `gorm:"autoCreateTime:milli"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
@@ -30,6 +33,7 @@ func (m *User) toDomain() *user.User {
 		Password:  m.Password,
 		FirstName: m.FirstName,
 		LastName:  m.LastName,
+		PhotoURL:  m.PhotoURL,
 		CreatedAt: m.CreatedAt,
 		DeletedAt: m.DeletedAt,
 	}
@@ -50,6 +54,7 @@ func fromDomain(u *user.User) *User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		PhotoURL:  u.PhotoURL,
 		CreatedAt: u.CreatedAt,
 		DeletedAt: u.DeletedAt,
 	}
@@ -97,6 +102,17 @@ func (r *UserRepository) GetUsers() ([]user.User, error) {
 	return toDomainUsers(models), nil
 }
 
+func (r *UserRepository) GetByID(id string) (*user.User, error) {
+	var model User
+
+	err := r.db.Where("id = ? AND deleted_at IS NULL", id).Find(&model).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return model.toDomain(), nil
+}
 func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) {
 
 	var model User
@@ -108,6 +124,14 @@ func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) 
 	}
 
 	return model.toDomain(), nil
+}
+
+func (r *UserRepository) UpdatePhoto(username, photo_url string) error {
+	if photo_url == "" {
+		return errors.New("photo_url is empty")
+	}
+
+	return r.db.Model(&User{}).Where("username = ?", username).Update("photo_url", photo_url).Error
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
