@@ -36,7 +36,7 @@ func (h *Handlers) AddUser(c *fiber.Ctx) error {
 		LastName:  req.LastName,
 	}
 
-	if err := h.userRepo.Create(&u); err != nil {
+	if err := h.service.CreateUser(&u); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -61,7 +61,7 @@ func (h *Handlers) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.userRepo.Delete(id)
+	err := h.service.DeleteUser(id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("failed to delete user: %v", err),
@@ -81,7 +81,7 @@ func (h *Handlers) DeleteUser(c *fiber.Ctx) error {
 // @Router /users [get]
 func (h *Handlers) GetUsers(c *fiber.Ctx) error {
 
-	users, err := h.userRepo.GetUsers()
+	users, err := h.service.GetUsers()
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

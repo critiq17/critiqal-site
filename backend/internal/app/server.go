@@ -36,7 +36,7 @@ func SetupApp() (*fiber.App, error) {
 		AllowHeaders: "Origins, Content-Type, Accept",
 	}))
 
-	handlers := handlers.NewHandlers(userRepo, service)
+	handlers := handlers.NewHandlers(service)
 	routes.InitRoutes(app, handlers)
 
 	log.Info("Success init db, handlers, and more")
