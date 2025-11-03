@@ -9,7 +9,7 @@
   let username = '';
 
   onMount(async () => {
-    // читаем юзернейм из localStorage только на клиенте
+
     if (typeof window !== 'undefined') {
       username = localStorage.getItem('username') || '';
       if (!username) {

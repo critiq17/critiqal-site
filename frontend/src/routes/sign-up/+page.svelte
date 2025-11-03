@@ -19,23 +19,35 @@
   }
 </script>
 
-<div class="flex flex-col items-center justify-center h-screen bg-gray-50">
-  <h2 class="text-2xl mb-4 font-semibold">Register</h2>
+<div class="min-h-screen flex items-center justify-center bg-gray-50">
+  <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-sm">
+    <h1 class="text-2xl font-semibold text-center mb-6 text-gray-800">Create your Critiqal account</h1>
 
-  <input bind:value={username} placeholder="Username" class="border p-2 w-64 mb-2" />
-  <input bind:value={email} type="email" placeholder="Email" class="border p-2 w-64 mb-2" />
-  <input bind:value={first_name} placeholder="First name" class="border p-2 w-64 mb-2" />
-  <input bind:value={last_name} placeholder="Last name" class="border p-2 w-64 mb-2" />
-  <input bind:value={password} type="password" placeholder="Password" class="border p-2 w-64 mb-4" />
+    <form on:submit|preventDefault={handleRegister} class="space-y-4">
+      <input type="text" placeholder="Username" bind:value={username} class="input" />
+      <input type="text" placeholder="First Name" bind:value={first_name} class="input" />
+      <input type="text" placeholder="Last Name" bind:value={last_name} class="input" />
+      <input type="email" placeholder="Email" bind:value={email} class="input" />
+      <input type="password" placeholder="Password" bind:value={password} class="input" />
 
-  <button
-    on:click={handleRegister}
-    class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
-  >
-    Submit
-  </button>
+      <button type="submit" class="btn-primary w-full">Sign Up</button>
+    </form>
 
-  {#if error}
-    <p class="text-red-500 mt-2">{error}</p>
-  {/if}
+    <p class="text-center text-gray-500 text-sm mt-4">
+      Already have an account?
+      <a href="/sign-in" class="text-purple-600 hover:underline">Sign In</a>
+    </p>
+  </div>
 </div>
+
+<style>
+ 
+ @reference "tailwindcss";
+
+  input {
+    @apply w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 outline-none;
+  }
+  .btn-primary {
+    @apply bg-purple-600 text-white py-2.5 rounded-lg hover:bg-purple-700 transition-colors;
+  }
+</style>
