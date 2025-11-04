@@ -1,87 +1,93 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { getUser, uploadUserPhoto } from '$lib/api/users';
+	import { onMount } from 'svelte';
+	import { getUser } from '$lib/api/users';
+	import { fly } from 'svelte/transition';
 
-  let user: any = {};
-  let newPhoto: File | null = null;
-  let previewUrl = '';
-  let username = '';
+	interface User {
+		username: string;
+		photo_url: string;
+	}
 
-  onMount(async () => {
+	let user: User = { username: '', photo_url: '' };
+	let menuOpen = false;
 
-    if (typeof window !== 'undefined') {
-      username = localStorage.getItem('username') || '';
-      if (!username) {
-        goto('/sign-in');
-        return;
-      }
+	onMount(async () => {
+		const username = localStorage.getItem('username');
+		if (!username) return;
 
-      try {
-        user = await getUser(username);
-      } catch (err) {
-        console.error('Error loading profile:', err);
-        goto('/sign-in');
-      }
-    }
-  });
+		try {
+			user = await getUser(username);
+		} catch (err) {
+			console.error('Failed to load user:', err);
+			localStorage.removeItem('username');
+			window.location.href = '/sign-in';
+		}
+	});
 
-  function handleFileChange(e: Event) {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.length) {
-      newPhoto = target.files[0];
-      previewUrl = URL.createObjectURL(newPhoto);
-    }
-  }
+	function goToProfile() {
+		window.location.href = '/profile';
+	}
 
-  async function uploadPhoto() {
-    if (!newPhoto || !username) return;
-    try {
-      const res = await uploadUserPhoto(username, newPhoto);
-      user.photo_url = res.url;
-      previewUrl = '';
-      newPhoto = null;
-    } catch {
-      alert('Error loading photo');
-    }
-  }
+	function goToSettings() {
+		window.location.href = '/settings';
+	}
 
-  function logout() {
-    localStorage.removeItem('username');
-    goto('/sign-in');
-  }
+	function logout() {
+		localStorage.removeItem('username');
+		window.location.href = '/sign-in';
+	}
 </script>
 
-<div class="max-w-md mx-auto p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Profile</h2>
-    <button on:click={logout} class="text-red-500 hover:text-red-700">
-      Log out
-    </button>
-  </div>
+<nav class="relative flex items-center justify-between px-6 py-4 border-b border-neutral-800 bg-black text-white">
+	<h1 class="text-xl font-bold tracking-wide select-none">
+		Critiqal
+	</h1>
 
-  <div class="flex flex-col items-center">
-    <img
-      src={previewUrl || user.photo_url || '/default-avatar.png'}
-      alt="avatar"
-      class="w-32 h-32 rounded-full object-cover border" height="150" width="150"
-    />
+	<div class="relative">
+		<button
+			on:click={() => (menuOpen = !menuOpen)}
+			class="rounded-full overflow-hidden border border-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-500"
+			aria-label="Open menu"
+		>
+			{#if user.photo_url}
+				<img
+					src={user.photo_url}
+					alt="User avatar"
+					class="w-10 h-10 object-cover hover:opacity-80 transition"
+				/>
+			{:else}
+				<div class="w-10 h-10 flex items-center justify-center bg-neutral-800 text-gray-400 hover:bg-neutral-700 transition">
+					<span class="text-sm font-semibold">{user.username ? user.username[0].toUpperCase() : '?'}</span>
+				</div>
+			{/if}
+		</button>
 
-    <input type="file" accept="image/*" on:change={handleFileChange} class="mt-4" />
+		{#if menuOpen}
+			<div
+				class="absolute right-0 mt-3 w-44 bg-neutral-900 border border-neutral-800 rounded-xl shadow-lg overflow-hidden z-50"
+				transition:fly={{ y: 10, duration: 150 }}
+			>
+				<button
+					on:click={goToProfile}
+					class="w-full text-left px-4 py-2 text-gray-300 hover:bg-neutral-800 hover:text-white transition"
+				>
+					Profile
+				</button>
 
-    {#if newPhoto}
-      <button
-        on:click={uploadPhoto}
-        class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Upload
-      </button>
-    {/if}
+				<button
+					on:click={goToSettings}
+					class="w-full text-left px-4 py-2 text-gray-300 hover:bg-neutral-800 hover:text-white transition"
+				>
+					Settings
+				</button>
 
-    <div class="mt-6 text-center">
-      <p class="text-lg font-semibold">{user.first_name} {user.last_name}</p>
-      <p class="text-gray-500">@{user.username}</p>
-      <p class="text-gray-400 mt-1">{user.email}</p>
-    </div>
-  </div>
-</div>
+				<button
+					on:click={logout}
+					class="w-full text-left px-4 py-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition"
+				>
+				  Logout
+				</button>
+			</div>
+		{/if}
+	</div>
+</nav>
