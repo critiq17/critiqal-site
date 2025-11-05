@@ -98,6 +98,15 @@ func (s *UserService) UploadUserPhoto(ctx context.Context, username string, file
 	return url, nil
 }
 
+func (s *UserService) SearchUsers(username string) ([]user.User, error) {
+	users, err := s.repo.Search(username)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (s *UserService) Auth(username, password string) (*user.User, bool, error) {
 	user, err := s.repo.GetUserByUsername(username)
 	if err != nil {

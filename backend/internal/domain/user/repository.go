@@ -5,6 +5,7 @@ type Repository interface {
 	Delete(id string) error
 	GetUsers() ([]User, error)
 	GetByID(id string) (*User, error)
+	Search(username string) ([]User, error)
 	GetUserByUsername(username string) (*User, error)
 	UpdatePhoto(username, photo_url string) error
 }
