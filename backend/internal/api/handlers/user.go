@@ -148,3 +148,22 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"url": url})
 }
+
+func (h *Handlers) SearchUsers(c *fiber.Ctx) error {
+	username := c.Params("username")
+	if username == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid username",
+		})
+	}
+
+	users, err := h.service.SearchUsers(username)
+	if err != nil {
+		return err
+	}
+
+	response := dto.ToUsersApi(users)
+
+	return c.Status(fiber.StatusOK).JSON(response)
+
+}

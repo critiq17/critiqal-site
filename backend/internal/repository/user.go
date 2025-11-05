@@ -126,6 +126,14 @@ func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) 
 	return model.toDomain(), nil
 }
 
+func (r *UserRepository) Search(username string) ([]user.User, error) {
+	var models []User
+	err := r.db.
+		Where("username ILIKE ?", username+"%").
+		Find(&models).Error
+	return toDomainUsers(models), err
+}
+
 func (r *UserRepository) UpdatePhoto(username, photo_url string) error {
 	if photo_url == "" {
 		return errors.New("photo_url is empty")
