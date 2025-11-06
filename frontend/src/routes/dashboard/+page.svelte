@@ -28,29 +28,41 @@
         window.location.href = '/sign-in';
       }
     });
+async function handleSearch(e: Event) {
+  searchQuery = (e.target as HTMLInputElement).value.trim();
 
-    async function handleSearch(e: Event) {
-      searchQuery = (e.target as HTMLInputElement).value.trim();
+  if (searchQuery.length === 0) {
+    results = [];
+    return;
+  }
 
-      if (searchQuery.length === 0) {
-        results = [];
-        return;
+  searching = true;
+
+   try {
+    const token = localStorage.getItem('token');
+
+    const res = await fetch(
+      `http://localhost:8080/api/users/search/${encodeURIComponent(searchQuery)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, 
+        },
       }
+    );
 
-      searching = true;
-      try {
-        const res = await fetch(`http://localhost:8080/api/users/search/${encodeURIComponent(searchQuery)}`);
-
-        if (res.ok) {
-          results = await res.json();
-        }
-      } catch (err) {
-        console.error('Search failed:', err);
-      } finally {
-        searching = false;
-      }
+    if (res.ok) {
+      results = await res.json();
+    } else {
+      console.error('Search failed:', res.statusText);
     }
-
+  } catch (err) {
+    console.error('Search failed:', err);
+  } finally {
+    searching = false;
+  }
+}
     function goToProfile() {
       window.location.href = '/profile';
     }
@@ -61,6 +73,7 @@
 
     function logout() {
       localStorage.removeItem('username');
+       localStorage.removeItem('token');
       window.location.href = '/sign-in';
     }
 

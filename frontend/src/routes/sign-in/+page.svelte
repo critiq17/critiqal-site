@@ -7,8 +7,9 @@
 
   async function handleLogin() {
     try {
-      await login({ username, password });
-      localStorage.setItem('username', username)
+      const res = await login({ username, password });
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('username', res.user.username)
       goto('/dashboard');
     } catch {
       error = 'Invalid username or password';
