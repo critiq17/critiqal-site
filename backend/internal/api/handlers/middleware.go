@@ -11,7 +11,7 @@ import (
 const (
 	authHeader = "Authorization"
 	username   = "username"
-	jwtSecret  = ""
+	jwtSecret  = "super_secret_key_123"
 )
 
 func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
@@ -66,7 +66,7 @@ func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 		})
 	}
 
-	c.Locals(username, username)
+	c.Locals("username", username)
 
 	return c.Next()
 }

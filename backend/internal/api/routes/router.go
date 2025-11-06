@@ -24,6 +24,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		users.Get("/", handlers.GetUsers)
 		users.Post("/:username/photo", handlers.UploadPhoto)
 		users.Get("/:username", handlers.GetByUsername)
+		users.Get("/me", handlers.GetMe)
 
 		search := users.Group("search")
 		{

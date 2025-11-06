@@ -90,5 +90,5 @@ func (h *Handlers) SignIn(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate token")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": tokenStr, "user": user})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": tokenStr, "user": dto.ToUserApi(user)})
 }
