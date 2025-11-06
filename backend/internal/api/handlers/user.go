@@ -164,6 +164,19 @@ func (h *Handlers) SearchUsers(c *fiber.Ctx) error {
 
 	response := dto.ToUsersApi(users)
 
-	return c.Status(fiber.StatusOK).JSON(response)
+	return c.JSON(response)
 
+}
+
+func (h *Handlers) GetMe(c *fiber.Ctx) error {
+	username := c.Locals("username").(string)
+
+	user, err := h.service.GetByUsername(username)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "user not found",
+		})
+	}
+
+	return c.JSON(dto.ToUserApi(user))
 }

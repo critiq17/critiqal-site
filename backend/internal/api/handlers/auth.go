@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/critiq17/critiqal-site/internal/api/dto"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type SignInInput struct {
@@ -78,12 +80,15 @@ func (h *Handlers) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	safeUser := &dto.UserApi{
-		Username:  user.Username,
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": input.Username,
+		"exp":      time.Now().Add(25 * time.Hour).Unix(),
+	})
+
+	tokenStr, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate token")
 	}
 
-	return c.Status(fiber.StatusOK).JSON(safeUser)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"token": tokenStr, "user": dto.ToUserApi(user)})
 }

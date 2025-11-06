@@ -17,13 +17,14 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	api := app.Group("/api")
 
-	users := api.Group("/users")
+	users := api.Group("/users", handlers.UserIdentity)
 	{
 		users.Post("/", handlers.AddUser)
 		users.Delete("/:id", handlers.DeleteUser)
 		users.Get("/", handlers.GetUsers)
 		users.Post("/:username/photo", handlers.UploadPhoto)
 		users.Get("/:username", handlers.GetByUsername)
+		users.Get("/me", handlers.GetMe)
 
 		search := users.Group("search")
 		{
