@@ -36,7 +36,7 @@ func (h *Handlers) AddUser(c *fiber.Ctx) error {
 		LastName:  req.LastName,
 	}
 
-	if err := h.service.CreateUser(&u); err != nil {
+	if err := h.userService.CreateUser(&u); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
@@ -61,7 +61,7 @@ func (h *Handlers) DeleteUser(c *fiber.Ctx) error {
 		})
 	}
 
-	err := h.service.DeleteUser(id)
+	err := h.userService.DeleteUser(id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("failed to delete user: %v", err),
@@ -81,7 +81,7 @@ func (h *Handlers) DeleteUser(c *fiber.Ctx) error {
 // @Router /users [get]
 func (h *Handlers) GetUsers(c *fiber.Ctx) error {
 
-	users, err := h.service.GetUsers()
+	users, err := h.userService.GetUsers()
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -98,7 +98,7 @@ func (h *Handlers) GetByUsername(c *fiber.Ctx) error {
 
 	username := c.Params("username")
 
-	user, err := h.service.GetByUsername(username)
+	user, err := h.userService.GetByUsername(username)
 
 	if err != nil {
 		return err
@@ -111,7 +111,7 @@ func (h *Handlers) Get(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 
-	user, err := h.service.GetByID(id)
+	user, err := h.userService.GetByID(id)
 
 	userApi := dto.ToUserApi(user)
 
@@ -139,7 +139,7 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 		})
 	}
 
-	url, err := h.service.UploadUserPhoto(c.Context(), username, file)
+	url, err := h.userService.UploadUserPhoto(c.Context(), username, file)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "error uploading photo",
@@ -157,7 +157,7 @@ func (h *Handlers) SearchUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	users, err := h.service.SearchUsers(username)
+	users, err := h.userService.SearchUsers(username)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (h *Handlers) SearchUsers(c *fiber.Ctx) error {
 func (h *Handlers) GetMe(c *fiber.Ctx) error {
 	username := c.Locals("username").(string)
 
-	user, err := h.service.GetByUsername(username)
+	user, err := h.userService.GetByUsername(username)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "user not found",
