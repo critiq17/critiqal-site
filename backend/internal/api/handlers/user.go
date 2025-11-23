@@ -107,7 +107,7 @@ func (h *Handlers) GetByUsername(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(dto.ToUserApi(user))
 }
 
-func (h *Handlers) Get(c *fiber.Ctx) error {
+func (h *Handlers) GetUser(c *fiber.Ctx) error {
 
 	id := c.Params("id")
 
