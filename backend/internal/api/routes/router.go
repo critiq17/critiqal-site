@@ -35,6 +35,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	posts := api.Group("/posts")
 	{
 		posts.Post("/", handlers.CreatePost)
+		posts.Get("/:user_id", handlers.GetPostsByUserID)
 	}
 
 	auth := api.Group("/auth")

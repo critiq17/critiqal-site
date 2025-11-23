@@ -106,7 +106,10 @@ func (r *PostRepository) Delete(ctx context.Context, id string) error {
 func (r *PostRepository) GetPostsByUserID(ctx context.Context, user_id string) ([]*post.Post, error) {
 	var models []*PostModel
 
-	err := r.db.WithContext(ctx).Where("owner_id = ?", user_id).Find(&models).Error
+	err := r.db.WithContext(ctx).
+		Where("owner_id = ?", user_id).
+		Order("created_at DESC").
+		Find(&models).Error
 
 	if err != nil {
 		return nil, err

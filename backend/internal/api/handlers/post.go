@@ -24,3 +24,15 @@ func (h *Handlers) CreatePost(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusCreated).JSON(req)
 }
+
+func (h *Handlers) GetPostsByUserID(ctx *fiber.Ctx) error {
+	user_id := ctx.Params("user_id")
+	posts, err := h.postService.GetPostsByUserID(context.Background(), user_id)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "not found posts",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToPostsDTO(posts))
+}
