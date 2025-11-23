@@ -41,6 +41,39 @@ func (h *Handlers) GetPost(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.ToPostDTO(post))
 }
 
+func (h *Handlers) UpdatePost(ctx *fiber.Ctx) error {
+
+	id := ctx.Params("post_id")
+
+	var req dto.PostUpdateDTO
+
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid body type",
+		})
+	}
+
+	if err := h.postService.Update(context.Background(), id, dto.ToPostDomainFromUpdateDTO(&req)); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "successfuly updated post"})
+}
+
+func (h *Handlers) DeletePost(ctx *fiber.Ctx) error {
+	id := ctx.Params("post_id")
+
+	if err := h.postService.Delete(context.Background(), id); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"status": "successfuly deleted post"})
+}
+
 func (h *Handlers) GetPostsByUserID(ctx *fiber.Ctx) error {
 	user_id := ctx.Params("user_id")
 	posts, err := h.postService.GetPostsByUserID(context.Background(), user_id)

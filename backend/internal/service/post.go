@@ -24,8 +24,8 @@ func (s *PostService) Get(ctx context.Context, id string) (*post.Post, error) {
 	return s.postRepo.Get(ctx, id)
 }
 
-func (s *PostService) Update(ctx context.Context, post *post.Post) error {
-	return s.postRepo.Update(ctx, post)
+func (s *PostService) Update(ctx context.Context, id string, post *post.Post) error {
+	return s.postRepo.Update(ctx, id, post)
 }
 
 func (s *PostService) Delete(ctx context.Context, id string) error {

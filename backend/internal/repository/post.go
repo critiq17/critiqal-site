@@ -85,7 +85,7 @@ func (r *PostRepository) Get(ctx context.Context, id string) (*post.Post, error)
 	return toDomainPost(&model), nil
 }
 
-func (r *PostRepository) Update(ctx context.Context, post *post.Post) error {
+func (r *PostRepository) Update(ctx context.Context, id string, post *post.Post) error {
 	updates := map[string]interface{}{
 		"photo_url":   post.PhotoURL,
 		"description": post.Description,
@@ -93,7 +93,7 @@ func (r *PostRepository) Update(ctx context.Context, post *post.Post) error {
 
 	return r.db.
 		Model(&PostModel{}).
-		Where("id = ?", post.ID).
+		Where("id = ?", id).
 		Updates(updates).
 		Error
 }

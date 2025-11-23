@@ -15,6 +15,11 @@ type PostResponseDTO struct {
 	Description string  `json:"description" binding:"required"`
 }
 
+type PostUpdateDTO struct {
+	PhotoURL    *string `json:"photo_url"`
+	Description string  `json:"description" binding:"required"`
+}
+
 func ToPostDomain(p *PostCreateDTO) *post.Post {
 	if p == nil {
 		return nil
@@ -41,4 +46,14 @@ func ToPostsDTO(posts []*post.Post) []PostResponseDTO {
 		dtos[i] = *ToPostDTO(u)
 	}
 	return dtos
+}
+
+func ToPostDomainFromUpdateDTO(p *PostUpdateDTO) *post.Post {
+	if p == nil {
+		return nil
+	}
+	return &post.Post{
+		PhotoURL:    p.PhotoURL,
+		Description: p.Description,
+	}
 }
