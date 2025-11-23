@@ -5,11 +5,12 @@ import (
 )
 
 type Handlers struct {
-	service *service.UserService
+	userService *service.UserService
+	postService *service.PostService
 }
 
-func NewHandlers(service *service.UserService) *Handlers {
+func NewHandlers(userService *service.UserService, postService *service.PostService) *Handlers {
 	return &Handlers{
-		service: service,
+		userService: userService, postService: postService,
 	}
 }

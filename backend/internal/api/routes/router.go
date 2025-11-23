@@ -30,7 +30,15 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		{
 			search.Get("/:username", handlers.SearchUsers)
 		}
+	}
 
+	posts := api.Group("/posts")
+	{
+		posts.Post("/", handlers.CreatePost)
+		//posts.Get("/:post_id", handlers.GetPost)
+		posts.Get("/:user_id", handlers.GetPostsByUserID)
+		posts.Put("/:post_id", handlers.UpdatePost)
+		posts.Delete("/:post_id", handlers.DeletePost)
 	}
 
 	auth := api.Group("/auth")

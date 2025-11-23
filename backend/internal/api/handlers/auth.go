@@ -37,7 +37,7 @@ func (h *Handlers) SignUp(c *fiber.Ctx) error {
 
 	u := dto.ToDBModel(&input)
 
-	if err := h.service.CreateUser(u); err != nil {
+	if err := h.userService.CreateUser(u); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "error creating user",
 		})
@@ -67,7 +67,7 @@ func (h *Handlers) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	user, ok, err := h.service.Auth(input.Username, input.Password)
+	user, ok, err := h.userService.Auth(input.Username, input.Password)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to authenticate users",

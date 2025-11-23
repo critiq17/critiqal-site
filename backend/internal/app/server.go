@@ -26,7 +26,9 @@ func SetupApp() (*fiber.App, error) {
 		log.Warn("Falling back to local storage...")
 	}
 	userRepo := repository.NewRepository(db.DB)
-	service := service.NewUserService(userRepo, storage)
+	postRepo := repository.NewPostRepository(db.DB)
+	userService := service.NewUserService(userRepo, storage)
+	postService := service.NewPostService(postRepo)
 
 	app := fiber.New()
 
@@ -36,7 +38,7 @@ func SetupApp() (*fiber.App, error) {
 		AllowHeaders: "Origins, Content-Type, Accept, Authorization",
 	}))
 
-	handlers := handlers.NewHandlers(service)
+	handlers := handlers.NewHandlers(userService, postService)
 	routes.InitRoutes(app, handlers)
 
 	log.Info("Success init db, handlers, and more")

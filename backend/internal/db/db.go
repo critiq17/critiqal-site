@@ -6,6 +6,7 @@ import (
 
 	"github.com/critiq17/critiqal-site/config"
 	"github.com/critiq17/critiqal-site/internal/domain/user"
+	"github.com/critiq17/critiqal-site/internal/repository"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -45,7 +46,7 @@ func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
 // migrating models for DB
 func migrate(db *DB) error {
 
-	if err := db.AutoMigrate(&user.User{}); err != nil {
+	if err := db.AutoMigrate(&user.User{}, &repository.PostModel{}); err != nil {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
