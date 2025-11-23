@@ -5,14 +5,15 @@ import (
 	"time"
 
 	"github.com/critiq17/critiqal-site/internal/domain/post"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type PostModel struct {
-	ID          string  `gorm:"primaryKey;not null"`
-	OwnerID     string  `gorm:"uniqueIndex;not null"`
-	PhotoURL    *string `gorm:"index"`
-	Description string  `gorm:"not null"`
+	ID          string `gorm:"primaryKey;not null"`
+	OwnerID     string `gorm:"index;not null"`
+	PhotoURL    *string
+	Description string `gorm:"not null"`
 	CreatedAt   *time.Time
 	DeletedAt   *time.Time `gorm:"index"`
 }
@@ -65,6 +66,7 @@ func fromDomainPosts(posts []post.Post) []PostModel {
 }
 
 func (r *PostRepository) Create(ctx context.Context, post *post.Post) error {
+
 	err := r.db.WithContext(ctx).Create(fromDomainPost(post)).Error
 	if err != nil {
 		return err
@@ -76,7 +78,7 @@ func (r *PostRepository) Get(ctx context.Context, id string) (*post.Post, error)
 	var model PostModel
 	err := r.db.WithContext(ctx).
 		Where("id = ?", id).
-		Model(&model).Error
+		First(&model).Error
 	if err != nil {
 		return nil, err
 	}
@@ -104,11 +106,18 @@ func (r *PostRepository) Delete(ctx context.Context, id string) error {
 func (r *PostRepository) GetPostsByUserID(ctx context.Context, user_id string) ([]*post.Post, error) {
 	var models []*PostModel
 
-	err := r.db.WithContext(ctx).Where("user_id = ?", user_id).Find(models).Error
+	err := r.db.WithContext(ctx).Where("owner_id = ?", user_id).Find(&models).Error
 
 	if err != nil {
 		return nil, err
 	}
 
 	return toDomainPosts(models), nil
+}
+
+func (p *PostModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if p.ID == "" {
+		p.ID = uuid.NewString()
+	}
+	return nil
 }
