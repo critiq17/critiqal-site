@@ -1,28 +1,38 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { getUser, uploadUserPhoto } from '$lib/api/users';
+  import { fly } from 'svelte/transition';
+  import { cubicOut } from 'svelte/easing';
 
   let user: any = {};
+  let posts: any[] = [];
   let newPhoto: File | null = null;
   let previewUrl = '';
   let username = '';
 
   onMount(async () => {
+    if (typeof window === 'undefined') return;
 
-    if (typeof window !== 'undefined') {
-      username = localStorage.getItem('username') || '';
-      if (!username) {
-        goto('/sign-in');
-        return;
-      }
+    username = localStorage.getItem('username') || '';
+    if (!username) {
+      goto('/sign-in');
+      return;
+    }
 
-      try {
-        user = await getUser(username);
-      } catch (err) {
-        console.error('Error loading profile:', err);
-        goto('/sign-in');
-      }
+    try {
+      const token = localStorage.getItem('token');
+      const userRes = await fetch(`/api/users/${username}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      user = await userRes.json();
+
+      const postsRes = await fetch(`/api/posts/${username}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      posts = await postsRes.json();
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      goto('/sign-in');
     }
   });
 
@@ -35,53 +45,334 @@
   }
 
   async function uploadPhoto() {
-    if (!newPhoto || !username) return;
+    if (!newPhoto) return;
+
+    const username = localStorage.getItem('username');
+    const token = localStorage.getItem('token');
+    if (!username || !token) return;
+
+    const formData = new FormData();
+    formData.append('photo', newPhoto);
+
     try {
-      const res = await uploadUserPhoto(username, newPhoto);
-      user.photo_url = res.url;
-      previewUrl = '';
-      newPhoto = null;
-    } catch {
-      alert('Error loading photo');
+      const res = await fetch(`/api/users/${username}/photo`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        user.photo_url = data.url;
+        newPhoto = null;
+        previewUrl = '';
+      } else {
+        alert('Error uploading photo');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error uploading photo');
     }
   }
 
   function logout() {
-    localStorage.removeItem('username');
-    goto('/sign-in');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('username');
+      localStorage.removeItem('token');
+      goto('/sign-in');
+    }
   }
 </script>
 
-<div class="max-w-md mx-auto p-6">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Profile</h2>
-    <button on:click={logout} class="text-red-500 hover:text-red-700">
-      Log out
-    </button>
-  </div>
+<svelte:head>
+  <title>My Profile - Critiqal</title>
+</svelte:head>
 
-  <div class="flex flex-col items-center">
-    <img
-      src={previewUrl || user.photo_url || '/default-avatar.png'}
-      alt="avatar"
-      class="w-32 h-32 rounded-full object-cover border" height="150" width="150"
-    />
-
-    <input type="file" accept="image/*" on:change={handleFileChange} class="mt-4" />
-
-    {#if newPhoto}
-      <button
-        on:click={uploadPhoto}
-        class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Upload
+<div class="page-container">
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-content">
+      <h1 on:click={() => goto('/dashboard')} class="logo">
+        Critiqal
+      </h1>
+      <button on:click={logout} class="logout-btn">
+        Logout
       </button>
-    {/if}
+    </div>
+  </nav>
 
-    <div class="mt-6 text-center">
-      <p class="text-lg font-semibold">{user.first_name} {user.last_name}</p>
-      <p class="text-gray-500">@{user.username}</p>
-      <p class="text-gray-400 mt-1">{user.email}</p>
+  <!-- Profile Content -->
+  <div class="content">
+    <div class="profile-card" in:fly={{ y: 20, duration: 500, easing: cubicOut }}>
+      <div class="profile-content">
+        <img
+          src={previewUrl || user.photo_url || '/default-avatar.png'}
+          alt="avatar"
+          class="avatar"
+        />
+
+        <input
+          type="file"
+          accept="image/*"
+          on:change={handleFileChange}
+          class="file-input"
+        />
+
+        {#if newPhoto}
+          <button on:click={uploadPhoto} class="btn-upload">
+            Upload photo
+          </button>
+        {/if}
+
+        <div class="user-info">
+          <p class="user-name">{user.first_name} {user.last_name}</p>
+          <p class="username">@{user.username}</p>
+          <p class="user-email">{user.email}</p>
+          {#if user.bio}
+            <p class="user-bio">{user.bio}</p>
+          {/if}
+        </div>
+      </div>
+    </div>
+
+    <!-- User Posts -->
+    <div class="posts-section">
+      <h3 class="section-title">My Posts</h3>
+
+      {#if posts.length === 0}
+        <div class="empty-state">
+          No posts yet
+        </div>
+      {:else}
+        <div class="posts-grid">
+          {#each posts as post, index (post.id)}
+            <article
+              class="post-card"
+              in:fly={{ y: 12, duration: 500, delay: (index + 1) * 100, easing: cubicOut }}
+            >
+              {#if post.title}
+                <h4 class="post-title">{post.title}</h4>
+              {/if}
+              <p class="post-body">{post.description || post.body}</p>
+              {#if post.photo_url || post.image_url}
+                <img
+                  src={post.photo_url || post.image_url}
+                  alt="post"
+                  class="post-image"
+                />
+              {/if}
+              <div class="post-date">
+                {new Date(post.created_at).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+            </article>
+          {/each}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
+
+<style>
+  .page-container {
+    min-height: 100vh;
+    background: #f9fafb;
+  }
+
+  .nav {
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 1.5rem;
+  }
+
+  .nav-content {
+    max-width: 64rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(to right, #9333ea, #3b82f6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    cursor: pointer;
+  }
+
+  .logout-btn {
+    color: #ef4444;
+    transition: color 0.2s ease;
+  }
+
+  .logout-btn:hover {
+    color: #b91c1c;
+  }
+
+  .content {
+    max-width: 64rem;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .profile-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+  }
+
+  .profile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .avatar {
+    width: 8rem;
+    height: 8rem;
+    border-radius: 9999px;
+    object-fit: cover;
+    border: 4px solid #f3e8ff;
+  }
+
+  .file-input {
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  .file-input::file-selector-button {
+    margin-right: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: #f3e8ff;
+    color: #7e22ce;
+    cursor: pointer;
+  }
+
+  .file-input::file-selector-button:hover {
+    background: #e9d5ff;
+  }
+
+  .btn-upload {
+    margin-top: 0.75rem;
+    background: #9333ea;
+    color: white;
+    padding: 0.625rem 1.5rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-upload:hover {
+    background: #7e22ce;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+  }
+
+  .user-info {
+    margin-top: 1.5rem;
+    text-align: center;
+  }
+
+  .user-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  .username {
+    color: #9333ea;
+    margin-top: 0.25rem;
+  }
+
+  .user-email {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  .user-bio {
+    color: #4b5563;
+    margin-top: 1rem;
+    max-width: 28rem;
+  }
+
+  .posts-section {
+    margin-top: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    text-align: center;
+    color: #6b7280;
+  }
+
+  .posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .post-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .post-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .post-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .post-body {
+    color: #374151;
+    line-height: 1.625;
+  }
+
+  .post-image {
+    margin-top: 1rem;
+    width: 100%;
+    border-radius: 0.75rem;
+    object-fit: cover;
+    max-height: 300px;
+  }
+
+  .post-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.75rem;
+  }
+</style>
