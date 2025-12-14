@@ -42,6 +42,7 @@ func SetupApp() (*fiber.App, error) {
 	routes.InitRoutes(app, handlers)
 
 	log.Info("Success init db, handlers, and more")
+	db.Debug()
 
 	return app, nil
 }

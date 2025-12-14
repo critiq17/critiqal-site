@@ -32,13 +32,14 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		}
 	}
 
-	posts := api.Group("/posts")
+	posts := api.Group("/posts", handlers.UserIdentity)
 	{
 		posts.Post("/", handlers.CreatePost)
 		//posts.Get("/:post_id", handlers.GetPost)
 		posts.Get("/:user_id", handlers.GetPostsByUserID)
 		posts.Put("/:post_id", handlers.UpdatePost)
 		posts.Delete("/:post_id", handlers.DeletePost)
+		posts.Get("/recent", handlers.GetRecentPosts)
 	}
 
 	auth := api.Group("/auth")

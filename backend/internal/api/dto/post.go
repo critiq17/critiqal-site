@@ -1,6 +1,10 @@
 package dto
 
-import "github.com/critiq17/critiqal-site/internal/domain/post"
+import (
+	"time"
+
+	"github.com/critiq17/critiqal-site/internal/domain/post"
+)
 
 type PostCreateDTO struct {
 	OwnerID     string  `json:"owner_id" binding:"required"`
@@ -9,10 +13,12 @@ type PostCreateDTO struct {
 }
 
 type PostResponseDTO struct {
-	ID          string  `json:"id"`
-	OwnerID     string  `json:"owner_id" binding:"required"`
-	PhotoURL    *string `json:"photo_url"`
-	Description string  `json:"description" binding:"required"`
+	ID        string     `json:"id"`
+	Author    UserApi    `json:"author"`
+	Title     *string    `json:"title,omitempty"`
+	Body      string     `json:"body"`
+	CreatedAt *time.Time `json:"created_at"`
+	ImageURL  *string    `json:"image_url,omitempty"`
 }
 
 type PostUpdateDTO struct {
@@ -33,10 +39,18 @@ func ToPostDomain(p *PostCreateDTO) *post.Post {
 
 func ToPostDTO(p *post.Post) *PostResponseDTO {
 	return &PostResponseDTO{
-		ID:          p.ID,
-		OwnerID:     p.OwnerID,
-		PhotoURL:    p.PhotoURL,
-		Description: p.Description,
+		ID: p.ID,
+		Author: UserApi{
+			Username:  p.Owner.Username,
+			Email:     p.Owner.Email,
+			FirstName: p.Owner.FirstName,
+			LastName:  p.Owner.LastName,
+			PhotoURL:  p.Owner.PhotoURL,
+		},
+		Title:     p.Title,
+		Body:      p.Description,
+		CreatedAt: p.CreatedAt,
+		ImageURL:  p.PhotoURL,
 	}
 }
 

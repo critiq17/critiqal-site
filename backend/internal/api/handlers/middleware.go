@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -10,13 +9,12 @@ import (
 
 const (
 	authHeader = "Authorization"
-	username   = "username"
 	jwtSecret  = "super_secret_key_123"
 )
 
+// UserIdentity extracts user info from JWT session
 func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 	header := c.Get(authHeader)
-
 	if header == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "missing auth header",
@@ -32,7 +30,7 @@ func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 
 	tokenStr := parts[1]
 
-	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
+	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
 		}
@@ -41,31 +39,28 @@ func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 
 	if err != nil || !token.Valid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid or expired token",
+			"error": "invalid or expired token: " + err.Error(),
 		})
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
+	claims := token.Claims.(jwt.MapClaims)
 
+	userID, ok := claims["user_id"].(string)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid token claims",
+			"error": "missing user_id in token",
 		})
 	}
 
-	username, ok := claims["username"]
+	username, ok := claims["username"].(string)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "missing username in token",
 		})
 	}
 
-	if exp, ok := claims["exp"].(float64); ok && int64(exp) < time.Now().Unix() {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "token expired",
-		})
-	}
-
+	// Store both in context
+	c.Locals("user_id", userID)
 	c.Locals("username", username)
 
 	return c.Next()
