@@ -108,7 +108,6 @@ func (h *Handlers) GetByUsername(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) GetUser(c *fiber.Ctx) error {
-
 	id := c.Params("id")
 
 	user, err := h.userService.GetByID(id)
@@ -169,9 +168,9 @@ func (h *Handlers) SearchUsers(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) GetMe(c *fiber.Ctx) error {
-	username := c.Locals("username").(string)
+	userID := c.Locals("user_id").(string)
 
-	user, err := h.userService.GetByUsername(username)
+	user, err := h.userService.GetByID(userID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "user not found",
