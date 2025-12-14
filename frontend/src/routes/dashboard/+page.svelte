@@ -44,7 +44,7 @@
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+      const res = await fetch(`http://localhost:8080/api/users/${encodeURIComponent(username)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -68,7 +68,7 @@
     loadingPosts = true;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('/api/posts/recent', {
+      const res = await fetch('http://localhost:8080/api/posts/recent', {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
       });
 
@@ -96,7 +96,7 @@
     searching = true;
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/users/search/${encodeURIComponent(searchQuery.trim())}`, {
+      const res = await fetch(`http://localhost:8080/api/users/search/${encodeURIComponent(searchQuery.trim())}`, {
         headers: { Authorization: token ? `Bearer ${token}` : '' },
       });
 
@@ -110,16 +110,14 @@
 
     try {
       const token = localStorage.getItem('token');
-      const username = localStorage.getItem('username');
       
-      const res = await fetch('/api/posts/', {
+      const res = await fetch('http://localhost:8080/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          owner_id: username,
           title: newPostTitle || undefined,
           description: newPostBody,
           photo_url: newPostImageUrl || null,

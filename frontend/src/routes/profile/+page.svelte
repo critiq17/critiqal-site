@@ -4,11 +4,29 @@
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
 
-  let user: any = {};
-  let posts: any[] = [];
+  interface User {
+    username: string;
+    photo_url?: string;
+    first_name?: string;
+    last_name?: string;
+    bio?: string;
+    email?: string;
+  }
+
+  interface Post {
+    id: string;
+    title?: string;
+    body: string;
+    created_at: string;
+    image_url?: string | null;
+  }
+
+  let user: User | null = null;
+  let posts: Post[] = [];
   let newPhoto: File | null = null;
   let previewUrl = '';
   let username = '';
+  let loading = true;
 
   onMount(async () => {
     if (typeof window === 'undefined') return;
@@ -21,18 +39,29 @@
 
     try {
       const token = localStorage.getItem('token');
-      const userRes = await fetch(`/api/users/${username}`, {
+      
+      // Get current user profile
+      const userRes = await fetch(`http://localhost:8080/api/users/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      user = await userRes.json();
+      
+      if (userRes.ok) {
+        user = await userRes.json();
+      }
 
-      const postsRes = await fetch(`/api/posts/${username}`, {
+      // Get user's posts
+      const postsRes = await fetch(`http://localhost:8080/api/posts/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      posts = await postsRes.json();
+      
+      if (postsRes.ok) {
+        posts = await postsRes.json();
+      }
     } catch (err) {
       console.error('Error loading profile:', err);
       goto('/sign-in');
+    } finally {
+      loading = false;
     }
   });
 
@@ -55,7 +84,7 @@
     formData.append('photo', newPhoto);
 
     try {
-      const res = await fetch(`/api/users/${username}/photo`, {
+      const res = await fetch(`http://localhost:8080/api/users/${username}/photo`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -65,7 +94,7 @@
 
       const data = await res.json();
 
-      if (data.url) {
+      if (data.url && user) {
         user.photo_url = data.url;
         newPhoto = null;
         previewUrl = '';
@@ -106,78 +135,83 @@
 
   <!-- Profile Content -->
   <div class="content">
-    <div class="profile-card" in:fly={{ y: 20, duration: 500, easing: cubicOut }}>
-      <div class="profile-content">
-        <img
-          src={previewUrl || user.photo_url || '/default-avatar.png'}
-          alt="avatar"
-          class="avatar"
-        />
+    {#if loading}
+      <div class="loading">Loading profile...</div>
+    {:else if user}
+      <div class="profile-card" in:fly={{ y: 20, duration: 500, easing: cubicOut }}>
+        <div class="profile-content">
+          <img
+            src={previewUrl || user.photo_url || '/default-avatar.png'}
+            alt="avatar"
+            class="avatar"
+          />
 
-        <input
-          type="file"
-          accept="image/*"
-          on:change={handleFileChange}
-          class="file-input"
-        />
+          <input
+            type="file"
+            accept="image/*"
+            on:change={handleFileChange}
+            class="file-input"
+          />
 
-        {#if newPhoto}
-          <button on:click={uploadPhoto} class="btn-upload">
-            Upload photo
-          </button>
-        {/if}
-
-        <div class="user-info">
-          <p class="user-name">{user.first_name} {user.last_name}</p>
-          <p class="username">@{user.username}</p>
-          <p class="user-email">{user.email}</p>
-          {#if user.bio}
-            <p class="user-bio">{user.bio}</p>
+          {#if newPhoto}
+            <button on:click={uploadPhoto} class="btn-upload">
+              Upload photo
+            </button>
           {/if}
+
+          <div class="user-info">
+            <p class="user-name">{user.first_name} {user.last_name}</p>
+            <p class="username">@{user.username}</p>
+            <p class="user-email">{user.email}</p>
+            {#if user.bio}
+              <p class="user-bio">{user.bio}</p>
+            {/if}
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- User Posts -->
-    <div class="posts-section">
-      <h3 class="section-title">My Posts</h3>
+      <!-- User Posts -->
+      <div class="posts-section">
+        <h3 class="section-title">My Posts</h3>
 
-      {#if posts.length === 0}
-        <div class="empty-state">
-          No posts yet
-        </div>
-      {:else}
-        <div class="posts-grid">
-          {#each posts as post, index (post.id)}
-            <article
-              class="post-card"
-              in:fly={{ y: 12, duration: 500, delay: (index + 1) * 100, easing: cubicOut }}
-            >
-              {#if post.title}
-                <h4 class="post-title">{post.title}</h4>
-              {/if}
-              <p class="post-body">{post.description || post.body}</p>
-              {#if post.photo_url || post.image_url}
-                <img
-                  src={post.photo_url || post.image_url}
-                  alt="post"
-                  class="post-image"
-                />
-              {/if}
-              <div class="post-date">
-                {new Date(post.created_at).toLocaleDateString('en-US', {
-                  month: 'long',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </div>
-            </article>
-          {/each}
-        </div>
-      {/if}
-    </div>
+        {#if posts.length === 0}
+          <div class="empty-state">
+            No posts yet
+          </div>
+        {:else}
+          <div class="posts-grid">
+            {#each posts as post, index (post.id)}
+              <article
+                class="post-card"
+                in:fly={{ y: 12, duration: 500, delay: index * 100, easing: cubicOut }}
+                on:click={() => goto(`/posts/${post.id}`)}
+              >
+                {#if post.title}
+                  <h4 class="post-title">{post.title}</h4>
+                {/if}
+                <p class="post-body">{post.body}</p>
+                {#if post.image_url}
+                  <img
+                    src={post.image_url}
+                    alt="post"
+                    class="post-image"
+                  />
+                {/if}
+                <div class="post-date">
+                  {new Date(post.created_at).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              </article>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -191,6 +225,9 @@
     background: white;
     border-bottom: 1px solid #e5e7eb;
     padding: 1rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 40;
   }
 
   .nav-content {
@@ -224,6 +261,12 @@
     max-width: 64rem;
     margin: 0 auto;
     padding: 2rem 1.5rem;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
   }
 
   .profile-card {
@@ -343,6 +386,7 @@
     border-radius: 1rem;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     padding: 1.5rem;
+    cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 

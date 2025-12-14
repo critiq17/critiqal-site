@@ -1,6 +1,8 @@
 package post
 
-import "context"
+import (
+	"context"
+)
 
 type Repository interface {
 
@@ -12,4 +14,6 @@ type Repository interface {
 
 	// Getters
 	GetPostsByUserID(ctx context.Context, user_id string) ([]*Post, error)
+
+	GetRecent(ctx context.Context, limit int) ([]*Post, error)
 }

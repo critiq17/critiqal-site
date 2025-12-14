@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { register } from '$lib/api/auth';
   import { goto } from '$app/navigation';
   import { scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -10,30 +9,62 @@
   let first_name = '';
   let last_name = '';
   let error = '';
+  let loading = false;
 
   async function handleRegister() {
+    if (!username || !email || !password) {
+      error = 'Please fill in all required fields';
+      setTimeout(() => error = '', 3000);
+      return;
+    }
+
+    loading = true;
     try {
-      await register({ username, email, password, first_name, last_name });
-      goto('/sign-in');
+      const res = await fetch('http://localhost:8080/api/auth/sign-up', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          first_name,
+          last_name,
+        }),
+      });
+
+      if (res.ok) {
+        goto('/sign-in');
+      } else {
+        const data = await res.json();
+        error = data.error || 'Error creating account';
+        setTimeout(() => error = '', 3000);
+      }
     } catch (err) {
       error = 'Error register: ' + err;
       setTimeout(() => error = '', 3000);
+    } finally {
+      loading = false;
     }
   }
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-  <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm" in:scale={{ duration: 400, start: 0.95, easing: cubicOut }}>
-    <h1 class="text-2xl font-semibold text-center mb-6 text-gray-800">
-      Create your Critiqal account
-    </h1>
+<svelte:head>
+  <title>Sign Up - Critiqal</title>
+</svelte:head>
 
-    <div class="space-y-4">
+<div class="page-container">
+  <div class="card" in:scale={{ duration: 400, start: 0.95, easing: cubicOut }}>
+    <h1 class="title">Create your Critiqal account</h1>
+
+    <div class="form-container">
       <input
         type="text"
         placeholder="Username"
         bind:value={username}
         class="input-field"
+        disabled={loading}
       />
       
       <input
@@ -41,6 +72,7 @@
         placeholder="First Name"
         bind:value={first_name}
         class="input-field"
+        disabled={loading}
       />
       
       <input
@@ -48,6 +80,7 @@
         placeholder="Last Name"
         bind:value={last_name}
         class="input-field"
+        disabled={loading}
       />
       
       <input
@@ -55,6 +88,7 @@
         placeholder="Email"
         bind:value={email}
         class="input-field"
+        disabled={loading}
       />
       
       <input
@@ -63,45 +97,101 @@
         bind:value={password}
         on:keydown={(e) => e.key === 'Enter' && handleRegister()}
         class="input-field"
+        disabled={loading}
       />
 
       {#if error}
-        <p class="text-sm text-red-500 text-center error-shake">{error}</p>
+        <p class="error-message">{error}</p>
       {/if}
 
-      <button
-        on:click={handleRegister}
-        class="btn-submit"
-      >
-        Sign Up
+      <button on:click={handleRegister} class="btn-submit" disabled={loading}>
+        {loading ? 'Creating account...' : 'Sign Up'}
       </button>
     </div>
 
-    <p class="text-center text-gray-500 text-sm mt-4">
+    <p class="footer-text">
       Already have an account?
-      <a href="/sign-in" class="text-purple-600 hover:underline font-medium">Sign In</a>
+      <a href="/sign-in" class="link">Sign In</a>
     </p>
   </div>
 </div>
 
 <style>
+  .page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f9fafb;
+    padding: 1.5rem;
+  }
+
+  .card {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 24rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #1f2937;
+  }
+
+  .form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg p-2.5 outline-none;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.625rem;
+    outline: none;
     transition: all 0.2s ease;
   }
 
   .input-field:focus {
-    @apply ring-2 ring-purple-500;
+    box-shadow: 0 0 0 2px #9333ea;
+  }
+
+  .input-field:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
   }
 
   .btn-submit {
-    @apply w-full bg-purple-600 text-white py-2.5 rounded-lg;
+    width: 100%;
+    background: #9333ea;
+    color: white;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .btn-submit:hover {
-    @apply bg-purple-700 shadow-lg;
+  .btn-submit:hover:not(:disabled) {
+    background: #7e22ce;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transform: scale(1.02);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .error-message {
+    font-size: 0.875rem;
+    color: #ef4444;
+    text-align: center;
+    animation: shake 0.3s ease-in-out;
   }
 
   @keyframes shake {
@@ -110,7 +200,20 @@
     75% { transform: translateX(5px); }
   }
 
-  .error-shake {
-    animation: shake 0.3s ease-in-out;
+  .footer-text {
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+  }
+
+  .link {
+    color: #9333ea;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .link:hover {
+    text-decoration: underline;
   }
 </style>

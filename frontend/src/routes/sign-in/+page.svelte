@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { login } from '$lib/api/auth';
   import { goto } from '$app/navigation';
   import { scale } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
@@ -7,19 +6,46 @@
   let username = '';
   let password = '';
   let error = '';
+  let loading = false;
 
   async function handleLogin() {
+    if (!username || !password) {
+      error = 'Please fill in all fields';
+      setTimeout(() => error = '', 3000);
+      return;
+    }
+
+    loading = true;
     try {
-      const res = await login({ username, password });
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('username', res.user.username);
-      goto('/dashboard');
+      const res = await fetch('http://localhost:8080/api/auth/sign-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.user.username);
+        goto('/dashboard');
+      } else {
+        error = 'Invalid username or password';
+        setTimeout(() => error = '', 3000);
+      }
     } catch {
       error = 'Invalid username or password';
       setTimeout(() => error = '', 3000);
+    } finally {
+      loading = false;
     }
   }
 </script>
+
+<svelte:head>
+  <title>Sign In - Critiqal</title>
+</svelte:head>
 
 <div class="min-h-screen flex items-center justify-center bg-gray-50 p-6">
   <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm" in:scale={{ duration: 400, start: 0.95, easing: cubicOut }}>
@@ -33,6 +59,7 @@
         placeholder="Username"
         bind:value={username}
         class="input-field"
+        disabled={loading}
       />
 
       <input
@@ -41,6 +68,7 @@
         bind:value={password}
         on:keydown={(e) => e.key === 'Enter' && handleLogin()}
         class="input-field"
+        disabled={loading}
       />
 
       {#if error}
@@ -50,8 +78,9 @@
       <button
         on:click={handleLogin}
         class="btn-submit"
+        disabled={loading}
       >
-        Sign In
+        {loading ? 'Signing in...' : 'Sign In'}
       </button>
     </div>
 
@@ -64,22 +93,41 @@
 
 <style>
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg p-2.5 outline-none;
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.625rem;
+    outline: none;
     transition: all 0.2s ease;
   }
 
   .input-field:focus {
-    @apply ring-2 ring-purple-500;
+    box-shadow: 0 0 0 2px #9333ea;
+  }
+
+  .input-field:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
   }
 
   .btn-submit {
-    @apply w-full bg-purple-600 text-white py-2.5 rounded-lg;
+    width: 100%;
+    background: #9333ea;
+    color: white;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .btn-submit:hover {
-    @apply bg-purple-700 shadow-lg;
+  .btn-submit:hover:not(:disabled) {
+    background: #7e22ce;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     transform: scale(1.02);
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   @keyframes shake {
@@ -91,6 +139,4 @@
   .error-shake {
     animation: shake 0.3s ease-in-out;
   }
-
-  @reference "tailwindcss";
 </style>

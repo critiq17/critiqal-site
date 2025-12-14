@@ -35,3 +35,14 @@ func (s *PostService) Delete(ctx context.Context, id string) error {
 func (s *PostService) GetPostsByUserID(ctx context.Context, user_id string) ([]*post.Post, error) {
 	return s.postRepo.GetPostsByUserID(ctx, user_id)
 }
+
+func (s *PostService) GetRecentPosts(ctx context.Context, limit int) ([]*post.Post, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	return s.postRepo.GetRecent(ctx, limit)
+}
