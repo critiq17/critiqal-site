@@ -12,6 +12,7 @@ import (
 type SignInInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	UserID   string `json:"user_id"`
 }
 
 // Sign-up godoc
@@ -80,8 +81,10 @@ func (h *Handlers) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
+	// ✅ FIX: Use user.UserID from database, not input.UserID from request
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": input.Username,
+		"user_id":  user.ID,
+		"username": user.Username,
 		"exp":      time.Now().Add(25 * time.Hour).Unix(),
 	})
 

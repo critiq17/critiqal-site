@@ -35,30 +35,55 @@
   let newPostBody = '';
   let newPostImageUrl = '';
 
+  // Simple auth headers - backend extracts user from JWT automatically
+  function getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
+    }
+    
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  }
+
+  function handleAuthError() {
+    localStorage.removeItem('username');
+    localStorage.removeItem('token');
+    goto('/sign-in');
+  }
+
   onMount(async () => {
     const username = localStorage.getItem('username');
-    if (!username) {
+    const token = localStorage.getItem('token');
+    
+    if (!username || !token) {
       goto('/sign-in');
       return;
     }
 
+
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:8080/api/users/${encodeURIComponent(username)}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: getAuthHeaders()
       });
 
       if (res.ok) {
         user = await res.json();
+      } else if (res.status === 401) {
+        console.error('401 Unauthorized - token invalid or expired');
+        handleAuthError();
+        return;
       } else {
-        localStorage.removeItem('username');
-        localStorage.removeItem('token');
-        goto('/sign-in');
+        console.error('Failed to fetch user:', res.status);
+        handleAuthError();
+        return;
       }
     } catch (err) {
-      localStorage.removeItem('username');
-      localStorage.removeItem('token');
-      goto('/sign-in');
+      console.error('Error fetching user:', err);
+      handleAuthError();
+      return;
     }
 
     await loadNewestPosts();
@@ -67,18 +92,21 @@
   async function loadNewestPosts() {
     loadingPosts = true;
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch('http://localhost:8080/api/posts/recent', {
-        headers: { Authorization: token ? `Bearer ${token}` : '' },
+        headers: getAuthHeaders()
       });
 
       if (res.ok) {
         posts = await res.json();
         posts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      } else if (res.status === 401) {
+        handleAuthError();
       } else {
+        console.error('Failed to load posts:', res.status);
         posts = [];
       }
-    } catch {
+    } catch (err) {
+      console.error('Error loading posts:', err);
       posts = [];
     } finally {
       loadingPosts = false;
@@ -95,28 +123,29 @@
 
     searching = true;
     try {
-      const token = localStorage.getItem('token');
       const res = await fetch(`http://localhost:8080/api/users/search/${encodeURIComponent(searchQuery.trim())}`, {
-        headers: { Authorization: token ? `Bearer ${token}` : '' },
+        headers: getAuthHeaders()
       });
 
-      if (res.ok) results = await res.json();
-    } catch {}
-    searching = false;
+      if (res.ok) {
+        results = await res.json();
+      } else if (res.status === 401) {
+        handleAuthError();
+      }
+    } catch (err) {
+      console.error('Error searching:', err);
+    } finally {
+      searching = false;
+    }
   }
 
   async function createPost() {
     if (!newPostBody.trim()) return;
 
     try {
-      const token = localStorage.getItem('token');
-      
       const res = await fetch('http://localhost:8080/api/posts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           title: newPostTitle || undefined,
           description: newPostBody,
@@ -130,6 +159,11 @@
         newPostImageUrl = '';
         createPostOpen = false;
         await loadNewestPosts();
+      } else if (res.status === 401) {
+        handleAuthError();
+      } else {
+        const errorText = await res.text();
+        console.error('Failed to create post:', res.status, errorText);
       }
     } catch (err) {
       console.error('Error creating post:', err);

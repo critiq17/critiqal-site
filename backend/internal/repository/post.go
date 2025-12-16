@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/critiq17/critiqal-site/internal/domain/post"
@@ -94,8 +95,25 @@ func (p *PostModel) BeforeCreate(tx *gorm.DB) (err error) {
 // Create inserts a new post using userID directly from JWT
 func (r *PostRepository) Create(ctx context.Context, p *post.Post) error {
 	model := toModelPost(p)
-	// OwnerID is already set from JWT (userID)
-	return r.db.WithContext(ctx).Create(model).Error
+
+	if model.ID == "" {
+		model.ID = uuid.NewString()
+	}
+
+	if model.CreatedAt == nil {
+		now := time.Now()
+		model.CreatedAt = &now
+	}
+
+	err := r.db.WithContext(ctx).Create(model).Error
+	if err != nil {
+		return err
+	}
+
+	p.ID = model.ID
+	p.CreatedAt = model.CreatedAt
+
+	return nil
 }
 
 // Get retrieves a single post by ID
@@ -162,10 +180,14 @@ func (r *PostRepository) GetPostsByUserID(ctx context.Context, userID string) ([
 }
 
 // GetRecent retrieves most recent posts
+// В repository/post.go - GetRecent
 func (r *PostRepository) GetRecent(ctx context.Context, limit int) ([]*post.Post, error) {
 	var models []*PostModel
 
+	fmt.Printf("🔍 GetRecent called with limit=%d\n", limit)
+
 	err := r.db.WithContext(ctx).
+		Debug().
 		Preload("Owner").
 		Where("deleted_at IS NULL").
 		Order("created_at DESC").
@@ -173,8 +195,23 @@ func (r *PostRepository) GetRecent(ctx context.Context, limit int) ([]*post.Post
 		Find(&models).Error
 
 	if err != nil {
+		fmt.Printf("Error: %v\n", err)
 		return nil, err
 	}
 
-	return toDomainPosts(models), nil
+	fmt.Printf("Found %d models\n", len(models))
+	for i, m := range models {
+		fmt.Printf("  Model %d: ID=%s, OwnerID=%s, Owner.ID='%s', Owner.Username='%s'\n",
+			i, m.ID, m.OwnerID, m.Owner.ID, m.Owner.Username)
+	}
+
+	posts := toDomainPosts(models)
+	fmt.Printf("Converted to %d domain posts\n", len(posts))
+
+	if len(posts) > 0 {
+		fmt.Printf("  First post Owner: ID='%s', Username='%s'\n",
+			posts[0].Owner.ID, posts[0].Owner.Username)
+	}
+
+	return posts, nil
 }
