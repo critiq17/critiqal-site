@@ -3,6 +3,7 @@ package dto
 import "github.com/critiq17/critiqal-site/internal/domain/user"
 
 type UserApi struct {
+	//UserID    string `json:"user_id"`
 	Username  string `json:"username" binding:"required"`
 	Email     string `json:"email" binding:"required"`
 	Password  string `json:"password"`
@@ -24,6 +25,7 @@ func ToUserApi(u *user.User) *UserApi {
 		return nil
 	}
 	return &UserApi{
+		//UserID:    u.ID,
 		Username:  u.Username,
 		Email:     u.Email,
 		Password:  u.Password,
