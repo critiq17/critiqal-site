@@ -16,6 +16,8 @@
     }
 
     loading = true;
+    error = '';
+    
     try {
       const res = await fetch('http://localhost:8080/api/auth/sign-in', {
         method: 'POST',
@@ -27,15 +29,57 @@
 
       if (res.ok) {
         const data = await res.json();
+        
+        console.log('📦 Sign-in response:', data);
+        
+        if (!data.token) {
+          error = 'Invalid server response - no token';
+          setTimeout(() => error = '', 3000);
+          return;
+        }
+
+        // Decode JWT to verify it has user_id and username
+        try {
+          const payload = data.token.split('.')[1];
+          const decoded = JSON.parse(atob(payload));
+          console.log('🔓 JWT payload:', decoded);
+          
+          if (!decoded.user_id) {
+            console.error('❌ JWT missing user_id claim');
+            error = 'Invalid token - missing user_id';
+            setTimeout(() => error = '', 3000);
+            return;
+          }
+          
+          if (!decoded.username) {
+            console.error('❌ JWT missing username claim');
+            error = 'Invalid token - missing username';
+            setTimeout(() => error = '', 3000);
+            return;
+          }
+        } catch (decodeErr) {
+          console.error('❌ Failed to decode JWT:', decodeErr);
+          error = 'Invalid token format';
+          setTimeout(() => error = '', 3000);
+          return;
+        }
+
+        // Store token and username
         localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.user.username);
+        localStorage.setItem('username', data.user?.username || username);
+        
+        console.log('✅ Login successful, redirecting to dashboard');
+        
         goto('/dashboard');
       } else {
-        error = 'Invalid username or password';
+        const errorData = await res.json().catch(() => ({}));
+        console.error('❌ Login failed:', res.status, errorData);
+        error = errorData.error || 'Invalid username or password';
         setTimeout(() => error = '', 3000);
       }
-    } catch {
-      error = 'Invalid username or password';
+    } catch (err) {
+      console.error('❌ Login error:', err);
+      error = 'Connection failed - is server running?';
       setTimeout(() => error = '', 3000);
     } finally {
       loading = false;

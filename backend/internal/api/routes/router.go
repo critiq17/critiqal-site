@@ -13,38 +13,52 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	// Swagger
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
+	// endpoint where saves all users profile picture
 	app.Static("/uploads", "./uploads")
 
 	api := app.Group("/api")
 
-	users := api.Group("/users", handlers.UserIdentity)
-	{
-		users.Post("/", handlers.AddUser)
-		users.Delete("/:id", handlers.DeleteUser)
-		users.Get("/", handlers.GetUsers)
-		users.Post("/:username/photo", handlers.UploadPhoto)
-		users.Get("/:username", handlers.GetByUsername)
-		users.Get("/me", handlers.GetMe)
-
-		search := users.Group("search")
-		{
-			search.Get("/:username", handlers.SearchUsers)
-		}
-	}
-
-	posts := api.Group("/posts", handlers.UserIdentity)
-	{
-		posts.Post("/", handlers.CreatePost)
-		//posts.Get("/:post_id", handlers.GetPost)
-		posts.Get("/:user_id", handlers.GetPostsByUserID)
-		posts.Put("/:post_id", handlers.UpdatePost)
-		posts.Delete("/:post_id", handlers.DeletePost)
-		posts.Get("/recent", handlers.GetRecentPosts)
-	}
-
+	// login, register
 	auth := api.Group("/auth")
 	{
 		auth.Post("/sign-up", handlers.SignUp)
 		auth.Post("/sign-in", handlers.SignIn)
 	}
+
+	// for search, get, profile, photo
+	users := api.Group("/users", handlers.UserIdentity)
+	{
+		// CRUD (without update)
+		users.Post("/", handlers.AddUser)
+		users.Get("/", handlers.GetUsers)
+		users.Get("/:username", handlers.GetByUsername)
+		users.Delete("/:id", handlers.DeleteUser)
+
+		// search by username
+		users.Get("/search/:username", handlers.SearchUsers)
+
+		// upload photo
+		users.Post("/:username/photo", handlers.UploadPhoto)
+
+		// retrieves full user information, without password, id
+		users.Get("/me", handlers.GetMe)
+
+	}
+
+	posts := api.Group("/posts", handlers.UserIdentity)
+	{
+		// CRUD
+		posts.Post("/", handlers.CreatePost)
+
+		// retrieves 50 recents posts, by created_at
+		posts.Get("/recent", handlers.GetRecentPosts)
+
+		posts.Get("/:id", handlers.GetPost)
+		posts.Put("/:id", handlers.UpdatePost)
+		posts.Delete("/:id", handlers.DeletePost)
+
+		// retrieves all posts by username
+		posts.Get("/users/:username", handlers.GetPostsByUserName)
+	}
+
 }

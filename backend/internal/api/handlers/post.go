@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/critiq17/critiqal-site/internal/api/dto"
-	"github.com/critiq17/critiqal-site/internal/domain/post"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -20,26 +20,35 @@ import (
 // @Failure 500 {object} map[string]string "server error"
 // @Router /api/posts [post]
 func (h *Handlers) CreatePost(c *fiber.Ctx) error {
-	userID := c.Locals("user_id").(string)
+	var input dto.PostCreateDTO
 
-	var req dto.PostCreateDTO
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "invalid json",
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
 		})
 	}
 
-	post := &post.Post{
-		OwnerID:     userID,
-		PhotoURL:    req.PhotoURL,
-		Description: req.Description,
+	userID, ok := c.Locals("user_id").(string)
+	if !ok || userID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "user_id not found in context",
+		})
 	}
 
-	if err := h.postService.Create(context.Background(), post); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	input.OwnerID = userID
+	post := dto.ToPostDomain(&input)
+
+	err := h.postService.Create(context.Background(), post)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to create post",
+		})
 	}
 
-	return c.Status(201).JSON(fiber.Map{"message": "post created"})
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "post created successfully",
+		"post_id": post.ID,
+	})
 }
 
 // GetPost retrieves a single post by ID
@@ -53,7 +62,7 @@ func (h *Handlers) CreatePost(c *fiber.Ctx) error {
 // @Failure 500 {object} map[string]string "post not found"
 // @Router /api/posts/{post_id} [get]
 func (h *Handlers) GetPost(ctx *fiber.Ctx) error {
-	postID := ctx.Params("post_id")
+	postID := ctx.Params("id")
 
 	if postID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -169,7 +178,7 @@ func (h *Handlers) DeletePost(ctx *fiber.Ctx) error {
 // @Failure 404 {object} map[string]string "user not found"
 // @Failure 500 {object} map[string]string "server error"
 // @Router /api/posts/{username} [get]
-func (h *Handlers) GetPostsByUserID(c *fiber.Ctx) error {
+func (h *Handlers) GetPostsByUserName(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	// Get user by username to find their ID
@@ -212,5 +221,18 @@ func (h *Handlers) GetRecentPosts(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(dto.ToPostsDTO(posts))
+	fmt.Printf("Found %d posts\n", len(posts))
+	for i, p := range posts {
+		fmt.Printf("Post %d: ID=%s, Owner.Username=%s, Owner.ID=%s\n",
+			i, p.ID, p.Owner.Username, p.Owner.ID)
+	}
+
+	dtos := dto.ToPostsDTO(posts)
+
+	fmt.Printf("Sending %d DTOs\n", len(dtos))
+	if len(dtos) > 0 {
+		fmt.Printf("First DTO: %+v\n", dtos[0])
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dtos)
 }
