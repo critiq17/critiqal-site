@@ -62,7 +62,7 @@ func (h *Handlers) CreatePost(c *fiber.Ctx) error {
 // @Failure 500 {object} map[string]string "post not found"
 // @Router /api/posts/{post_id} [get]
 func (h *Handlers) GetPost(ctx *fiber.Ctx) error {
-	postID := ctx.Params("post_id")
+	postID := ctx.Params("id")
 
 	if postID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -178,7 +178,7 @@ func (h *Handlers) DeletePost(ctx *fiber.Ctx) error {
 // @Failure 404 {object} map[string]string "user not found"
 // @Failure 500 {object} map[string]string "server error"
 // @Router /api/posts/{username} [get]
-func (h *Handlers) GetPostsByUserID(c *fiber.Ctx) error {
+func (h *Handlers) GetPostsByUserName(c *fiber.Ctx) error {
 	username := c.Params("username")
 
 	// Get user by username to find their ID

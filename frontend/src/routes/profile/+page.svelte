@@ -50,7 +50,7 @@
       }
 
       // Get user's posts
-      const postsRes = await fetch(`http://localhost:8080/api/posts/${username}`, {
+      const postsRes = await fetch(`http://localhost:8080/api/posts/users/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
