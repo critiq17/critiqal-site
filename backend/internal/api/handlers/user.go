@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// AddUser godoc
+// CreateUser godoc
 // @Summary      Created User
 // @Description  Created new user
 // @Tags         users
@@ -19,7 +19,7 @@ import (
 // @Failure      400  {object}   map[string]string         "bad request"
 // @Failure      500  {object}   map[string]string         "internal server error"
 // @Router       /api/users [post]
-func (h *Handlers) AddUser(c *fiber.Ctx) error {
+func (h *Handlers) CreateUser(c *fiber.Ctx) error {
 	var req dto.CreateRequest
 
 	if err := c.BodyParser(&req); err != nil {

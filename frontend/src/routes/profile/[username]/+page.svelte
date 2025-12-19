@@ -40,7 +40,7 @@
       const token = localStorage.getItem('token');
       
       // Fetch user profile
-      const userRes = await fetch(`http://localhost:8080/api/users/${username}`, {
+      const userRes = await fetch(`/api/users/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -49,7 +49,7 @@
       }
 
       // Fetch user posts
-      const postsRes = await fetch(`http://localhost:8080/api/posts/${username}`, {
+      const postsRes = await fetch(`/api/posts/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

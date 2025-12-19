@@ -41,7 +41,7 @@
       const token = localStorage.getItem('token');
       
       // Get current user profile
-      const userRes = await fetch(`http://localhost:8080/api/users/${username}`, {
+      const userRes = await fetch(`/api/users/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -50,7 +50,7 @@
       }
 
       // Get user's posts
-      const postsRes = await fetch(`http://localhost:8080/api/posts/users/${username}`, {
+      const postsRes = await fetch(`/api/posts/users/${username}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -84,7 +84,7 @@
     formData.append('photo', newPhoto);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/users/${username}/photo`, {
+      const res = await fetch(`/api/users/${username}/photo`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,

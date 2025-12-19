@@ -63,7 +63,7 @@
 
     // Load current user for navbar
     try {
-      const res = await fetch(`http://localhost:8080/api/users/${encodeURIComponent(username)}`, {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
         headers: getAuthHeaders()
       });
 
@@ -84,7 +84,7 @@
   async function loadPost() {
     loading = true;
     try {
-      const res = await fetch(`http://localhost:8080/api/posts/${postId}`, {
+      const res = await fetch(`/api/posts/${postId}`, {
         headers: getAuthHeaders()
       });
 

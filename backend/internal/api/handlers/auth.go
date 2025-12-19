@@ -81,7 +81,6 @@ func (h *Handlers) SignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ FIX: Use user.UserID from database, not input.UserID from request
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id":  user.ID,
 		"username": user.Username,

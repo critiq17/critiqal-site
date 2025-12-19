@@ -65,7 +65,7 @@
 
 
     try {
-      const res = await fetch(`http://localhost:8080/api/users/${encodeURIComponent(username)}`, {
+      const res = await fetch(`/api/users/${encodeURIComponent(username)}`, {
         headers: getAuthHeaders()
       });
 
@@ -92,7 +92,7 @@
   async function loadNewestPosts() {
     loadingPosts = true;
     try {
-      const res = await fetch('http://localhost:8080/api/posts/recent', {
+      const res = await fetch('/api/posts/recent', {
         headers: getAuthHeaders()
       });
 
@@ -123,7 +123,7 @@
 
     searching = true;
     try {
-      const res = await fetch(`http://localhost:8080/api/users/search/${encodeURIComponent(searchQuery.trim())}`, {
+      const res = await fetch(`/api/users/search/${encodeURIComponent(searchQuery.trim())}`, {
         headers: getAuthHeaders()
       });
 
@@ -143,7 +143,7 @@
     if (!newPostBody.trim()) return;
 
     try {
-      const res = await fetch('http://localhost:8080/api/posts', {
+      const res = await fetch('/api/posts', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({

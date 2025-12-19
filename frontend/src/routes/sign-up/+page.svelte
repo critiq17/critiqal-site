@@ -20,7 +20,7 @@
 
     loading = true;
     try {
-      const res = await fetch('http://localhost:8080/api/auth/sign-up', {
+      const res = await fetch(`/api/auth/sign-up`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

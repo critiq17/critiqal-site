@@ -184,7 +184,7 @@ func (r *PostRepository) GetPostsByUserID(ctx context.Context, userID string) ([
 func (r *PostRepository) GetRecent(ctx context.Context, limit int) ([]*post.Post, error) {
 	var models []*PostModel
 
-	fmt.Printf("🔍 GetRecent called with limit=%d\n", limit)
+	fmt.Printf("GetRecent called with limit=%d\n", limit)
 
 	err := r.db.WithContext(ctx).
 		Debug().
