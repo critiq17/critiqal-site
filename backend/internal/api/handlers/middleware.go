@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,21 +15,26 @@ const (
 
 // UserIdentity extracts user info from JWT session
 func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
+	tokenStr := ""
+
 	header := c.Get(authHeader)
-	if header == "" {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing auth header",
-		})
+	if header != "" {
+		parts := strings.Split(header, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "invalid auth header format",
+			})
+		}
+		tokenStr = parts[1]
+	} else {
+		tokenStr = c.Cookies("access_token")
 	}
 
-	parts := strings.Split(header, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
+	if tokenStr == "" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid auth header format",
+			"error": "missing auth token",
 		})
 	}
-
-	tokenStr := parts[1]
 
 	token, err := jwt.ParseWithClaims(tokenStr, jwt.MapClaims{}, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -45,14 +51,14 @@ func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 
 	claims := token.Claims.(jwt.MapClaims)
 
-	userID, ok := claims["user_id"].(string)
+	userID, ok := claims["user_id"]
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "missing user_id in token",
 		})
 	}
 
-	username, ok := claims["username"].(string)
+	username, ok := claims["username"]
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "missing username in token",
@@ -60,8 +66,8 @@ func (h *Handlers) UserIdentity(c *fiber.Ctx) error {
 	}
 
 	// Store both in context
-	c.Locals("user_id", userID)
-	c.Locals("username", username)
+	c.Locals("user_id", fmt.Sprint(userID))
+	c.Locals("username", fmt.Sprint(username))
 
 	return c.Next()
 }

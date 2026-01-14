@@ -16,7 +16,10 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (res.status === 401) {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
-    window.location.href = '/sign-in';
+    const currentPath = window.location.pathname
+    if (currentPath !== '/sign-in' && currentPath !== '/sign-up') {
+      window.location.href = '/sign-in'
+    }
     throw new Error('Unauthorized');
   }
 
@@ -40,7 +43,10 @@ export async function upload<T>(path: string, formData: FormData): Promise<T> {
   if (res.status === 401) {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
-    window.location.href = '/sign-in';
+    const currentPath = window.location.pathname
+    if (currentPath !== '/sign-in' && currentPath !== '/sign-up') {
+      window.location.href = '/sign-in'
+    }
     throw new Error('Unauthorized');
   }
 
