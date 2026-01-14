@@ -3,6 +3,15 @@
   import { goto } from '$app/navigation';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
+  import { auth } from '$lib/stores/auth';
+  import { notifications } from '$lib/stores/notifications';
+  import Button from '$lib/components/Button.svelte';
+  import Card from '$lib/components/Card.svelte';
+  import Input from '$lib/components/Input.svelte';
+  import Navigation from '$lib/components/Navigation.svelte';
+  import PostCard from '$lib/components/PostCard.svelte';
+  import { api } from '$lib/api/client';
+  import { formatDate } from '$lib/utils/helpers';
 
   interface User {
     username: string;
@@ -25,45 +34,26 @@
   let posts: Post[] = [];
   let newPhoto: File | null = null;
   let previewUrl = '';
-  let username = '';
   let loading = true;
+  let isEditing = false;
+  let editedBio = '';
 
-  onMount(async () => {
-    if (typeof window === 'undefined') return;
-
-    username = localStorage.getItem('username') || '';
-    if (!username) {
-      goto('/sign-in');
-      return;
-    }
-
+  async function fetchProfile() {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Get current user profile
-      const userRes = await fetch(`/api/users/${username}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (userRes.ok) {
-        user = await userRes.json();
-      }
-
-      // Get user's posts
-      const postsRes = await fetch(`/api/posts/users/${username}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (postsRes.ok) {
-        posts = await postsRes.json();
-      }
+      const [userRes, postsRes] = await Promise.all([
+        api<User>(`/users/${$auth.user?.username}`),
+        api<Post[]>(`/posts/users/${$auth.user?.username}`)
+      ]);
+      user = userRes;
+      posts = postsRes;
+      editedBio = user?.bio || '';
     } catch (err) {
-      console.error('Error loading profile:', err);
-      goto('/sign-in');
+      notifications.error('Failed to load profile');
+      console.error(err);
     } finally {
       loading = false;
     }
-  });
+  }
 
   function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
@@ -76,347 +66,168 @@
   async function uploadPhoto() {
     if (!newPhoto) return;
 
-    const username = localStorage.getItem('username');
-    const token = localStorage.getItem('token');
-    if (!username || !token) return;
-
     const formData = new FormData();
     formData.append('photo', newPhoto);
 
     try {
-      const res = await fetch(`/api/users/${username}/photo`, {
+      const data = await api<{ url: string }>(`/users/${$auth.user?.username}/photo`, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+        body: formData
       });
-
-      const data = await res.json();
 
       if (data.url && user) {
         user.photo_url = data.url;
         newPhoto = null;
         previewUrl = '';
-      } else {
-        alert('Error uploading photo');
+        notifications.success('Photo updated');
       }
     } catch (err) {
+      notifications.error('Failed to upload photo');
       console.error(err);
-      alert('Error uploading photo');
     }
   }
 
-  function logout() {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('username');
-      localStorage.removeItem('token');
-      goto('/sign-in');
+  async function saveBio() {
+    if (!user) return;
+
+    try {
+      const updated = await api<User>(`/users/${user.username}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ bio: editedBio })
+      });
+      user.bio = updated.bio;
+      isEditing = false;
+      notifications.success('Bio updated');
+    } catch (err) {
+      notifications.error('Failed to update bio');
+      console.error(err);
     }
   }
+
+  onMount(() => {
+    if (!$auth.user) {
+      goto('/sign-in');
+      return;
+    }
+    fetchProfile();
+  });
 </script>
 
 <svelte:head>
   <title>My Profile - Critiqal</title>
 </svelte:head>
 
-<div class="page-container">
-  <!-- Navigation -->
-  <nav class="nav">
-    <div class="nav-content">
-      <h1 on:click={() => goto('/dashboard')} class="logo">
-        Critiqal
-      </h1>
-      <button on:click={logout} class="logout-btn">
-        Logout
-      </button>
-    </div>
-  </nav>
+<div class="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
+  <Navigation />
 
-  <!-- Profile Content -->
-  <div class="content">
+  <main class="max-w-4xl mx-auto px-4 py-8">
     {#if loading}
-      <div class="loading">Loading profile...</div>
+      <div class="flex items-center justify-center min-h-[50vh]">
+        <div class="text-[color:var(--muted)]">Loading profile...</div>
+      </div>
     {:else if user}
-      <div class="profile-card" in:fly={{ y: 20, duration: 500, easing: cubicOut }}>
-        <div class="profile-content">
-          <img
-            src={previewUrl || user.photo_url || '/default-avatar.png'}
-            alt="avatar"
-            class="avatar"
-          />
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Info -->
+        <section class="lg:col-span-1" in:fly={{ x: -12, duration: 500, easing: cubicOut }}>
+          <Card class="p-6">
+            <div class="flex flex-col items-center space-y-4">
+              <div class="relative group">
+                <img
+                  src={previewUrl || user.photo_url || '/default-avatar.png'}
+                  alt="avatar"
+                  class="w-24 h-24 rounded-full object-cover border-4 border-[color:var(--border)]"
+                />
+                <label
+                  for="photo-upload"
+                  class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                >
+                  <div class="text-white text-sm">Change</div>
+                </label>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  onchange={handleFileChange}
+                  class="sr-only"
+                />
+              </div>
 
-          <input
-            type="file"
-            accept="image/*"
-            on:change={handleFileChange}
-            class="file-input"
-          />
+              {#if newPhoto}
+                <Button onclick={uploadPhoto} size="sm" class="w-full">
+                  Upload Photo
+                </Button>
+              {/if}
 
-          {#if newPhoto}
-            <button on:click={uploadPhoto} class="btn-upload">
-              Upload photo
-            </button>
-          {/if}
+              <div class="text-center space-y-2">
+                <h2 class="text-xl font-bold">
+                  {user.first_name} {user.last_name}
+                </h2>
+                <p class="text-[color:var(--muted)]">@{user.username}</p>
+                <p class="text-[color:var(--muted)] text-sm">{user.email}</p>
+              </div>
 
-          <div class="user-info">
-            <p class="user-name">{user.first_name} {user.last_name}</p>
-            <p class="username">@{user.username}</p>
-            <p class="user-email">{user.email}</p>
-            {#if user.bio}
-              <p class="user-bio">{user.bio}</p>
+              <div class="w-full space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-semibold">Bio</h3>
+                  {#if !isEditing}
+                    <Button size="sm" variant="ghost" onclick={() => (isEditing = true)}>
+                      Edit
+                    </Button>
+                  {/if}
+                </div>
+                {#if isEditing}
+                  <textarea
+                    bind:value={editedBio}
+                    class="w-full p-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] text-[color:var(--fg)] resize-none"
+                    rows="4"
+                    placeholder="Tell us about yourself..."
+                  />
+                  <div class="flex gap-2">
+                    <Button size="sm" onclick={saveBio}>Save</Button>
+                    <Button size="sm" variant="ghost" onclick={() => (isEditing = false, editedBio = user?.bio || '')}>
+                      Cancel
+                    </Button>
+                  </div>
+                {:else}
+                  <p class="text-[color:var(--muted)] text-sm leading-relaxed">
+                    {user.bio || 'No bio set'}
+                  </p>
+                {/if}
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <!-- Posts -->
+        <section class="lg:col-span-2" in:fly={{ y: 12, duration: 500, delay: 100, easing: cubicOut }}>
+          <div class="space-y-6">
+            <h2 class="text-2xl font-bold">My Posts</h2>
+            {#if posts.length === 0}
+              <Card class="p-8 text-center">
+                <div class="text-[color:var(--muted)]">No posts yet</div>
+              </Card>
+            {:else}
+              <div class="space-y-4">
+                {#each posts as post (post.id)}
+                  <PostCard
+                    {post}
+                    onclick={() => goto(`/posts/${post.id}`)}
+                  />
+                {/each}
+              </div>
             {/if}
           </div>
-        </div>
+        </section>
       </div>
-
-      <!-- User Posts -->
-      <div class="posts-section">
-        <h3 class="section-title">My Posts</h3>
-
-        {#if posts.length === 0}
-          <div class="empty-state">
-            No posts yet
-          </div>
-        {:else}
-          <div class="posts-grid">
-            {#each posts as post, index (post.id)}
-              <article
-                class="post-card"
-                in:fly={{ y: 12, duration: 500, delay: index * 100, easing: cubicOut }}
-                on:click={() => goto(`/posts/${post.id}`)}
-              >
-                {#if post.title}
-                  <h4 class="post-title">{post.title}</h4>
-                {/if}
-                <p class="post-body">{post.body}</p>
-                {#if post.image_url}
-                  <img
-                    src={post.image_url}
-                    alt="post"
-                    class="post-image"
-                  />
-                {/if}
-                <div class="post-date">
-                  {new Date(post.created_at).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
-              </article>
-            {/each}
-          </div>
-        {/if}
+    {:else}
+      <div class="flex items-center justify-center min-h-[50vh]">
+        <Card class="p-8 text-center">
+          <div class="text-[color:var(--muted)]">Profile not found</div>
+          <Button onclick={() => goto('/dashboard')} class="mt-4">
+            Back to Dashboard
+          </Button>
+        </Card>
       </div>
     {/if}
-  </div>
+  </main>
 </div>
-
-<style>
-  .page-container {
-    min-height: 100vh;
-    background: #f9fafb;
-  }
-
-  .nav {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1rem 1.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 40;
-  }
-
-  .nav-content {
-    max-width: 64rem;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .logo {
-    font-size: 1.5rem;
-    font-weight: 600;
-    background: linear-gradient(to right, #9333ea, #3b82f6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    cursor: pointer;
-  }
-
-  .logout-btn {
-    color: #ef4444;
-    transition: color 0.2s ease;
-  }
-
-  .logout-btn:hover {
-    color: #b91c1c;
-  }
-
-  .content {
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-  }
-
-  .loading {
-    text-align: center;
-    padding: 3rem;
-    color: #6b7280;
-  }
-
-  .profile-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-  }
-
-  .profile-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .avatar {
-    width: 8rem;
-    height: 8rem;
-    border-radius: 9999px;
-    object-fit: cover;
-    border: 4px solid #f3e8ff;
-  }
-
-  .file-input {
-    margin-top: 1rem;
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-
-  .file-input::file-selector-button {
-    margin-right: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    border: 0;
-    font-size: 0.875rem;
-    font-weight: 500;
-    background: #f3e8ff;
-    color: #7e22ce;
-    cursor: pointer;
-  }
-
-  .file-input::file-selector-button:hover {
-    background: #e9d5ff;
-  }
-
-  .btn-upload {
-    margin-top: 0.75rem;
-    background: #9333ea;
-    color: white;
-    padding: 0.625rem 1.5rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .btn-upload:hover {
-    background: #7e22ce;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: scale(1.02);
-  }
-
-  .user-info {
-    margin-top: 1.5rem;
-    text-align: center;
-  }
-
-  .user-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1f2937;
-  }
-
-  .username {
-    color: #9333ea;
-    margin-top: 0.25rem;
-  }
-
-  .user-email {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
-
-  .user-bio {
-    color: #4b5563;
-    margin-top: 1rem;
-    max-width: 28rem;
-  }
-
-  .posts-section {
-    margin-top: 2rem;
-  }
-
-  .section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1rem;
-  }
-
-  .empty-state {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-    text-align: center;
-    color: #6b7280;
-  }
-
-  .posts-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .post-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .post-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  .post-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-  }
-
-  .post-body {
-    color: #374151;
-    line-height: 1.625;
-  }
-
-  .post-image {
-    margin-top: 1rem;
-    width: 100%;
-    border-radius: 0.75rem;
-    object-fit: cover;
-    max-height: 300px;
-  }
-
-  .post-date {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 0.75rem;
-  }
-</style>

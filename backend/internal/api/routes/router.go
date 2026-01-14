@@ -23,6 +23,9 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		auth.Post("/sign-up", handlers.SignUp)
 		auth.Post("/sign-in", handlers.SignIn)
+		auth.Post("/refresh", handlers.Refresh)
+		auth.Post("/sign-out", handlers.SignOut)
+		auth.Post("/me", handlers.UserIdentity, handlers.AuthMe)
 	}
 
 	// for search, get, profile, photo
