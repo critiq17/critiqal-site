@@ -13,12 +13,15 @@ body {
 }
 
 :root {
-  /* Colors */
-  --bg: #0a0a0a;
+  --fg: #e6eef8;
+  --muted: #9aa6b2;
+  --border: rgba(255,255,255,0.04);
   --bg-2: #0f1720;
   --card: #0f1725;
   --fg: #e6eef8;
   --muted: #9aa6b2;
+  background-color: var(--bg);
+  color: var(--fg);
   --accent: #3b82f6;
   --accent-2: #7c3aed;
   --danger: #ef4444;

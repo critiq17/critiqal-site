@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { fly } from 'svelte/transition';
   import { cubicOut } from 'svelte/easing';
-  import { auth } from '$lib/stores/auth';
+  import { user as authUser } from '$lib/stores/auth';
   import { notifications } from '$lib/stores/notifications';
   import Button from '$lib/components/Button.svelte';
   import Card from '$lib/components/Card.svelte';
@@ -41,8 +41,8 @@
   async function fetchProfile() {
     try {
       const [userRes, postsRes] = await Promise.all([
-        api<User>(`/users/${$auth.user?.username}`),
-        api<Post[]>(`/posts/users/${$auth.user?.username}`)
+        api<User>(`/users/${$authUser?.username}`),
+        api<Post[]>(`/posts/users/${$authUser?.username}`)
       ]);
       user = userRes;
       posts = postsRes;
@@ -70,7 +70,7 @@
     formData.append('photo', newPhoto);
 
     try {
-      const data = await api<{ url: string }>(`/users/${$auth.user?.username}/photo`, {
+      const data = await api<{ url: string }>(`/users/${$authUser?.username}/photo`, {
         method: 'POST',
         body: formData
       });
@@ -105,7 +105,7 @@
   }
 
   onMount(() => {
-    if (!$auth.user) {
+    if (!$authUser) {
       goto('/sign-in');
       return;
     }
@@ -181,7 +181,7 @@
                     class="w-full p-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] text-[color:var(--fg)] resize-none"
                     rows="4"
                     placeholder="Tell us about yourself..."
-                  />
+                  ></textarea>
                   <div class="flex gap-2">
                     <Button size="sm" onclick={saveBio}>Save</Button>
                     <Button size="sm" variant="ghost" onclick={() => (isEditing = false, editedBio = user?.bio || '')}>

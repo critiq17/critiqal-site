@@ -124,7 +124,7 @@
   <!-- Navigation (same as dashboard) -->
   <nav class="nav">
     <div class="nav-container">
-      <h1 class="logo" onclick={() => goto('/dashboard')} style="cursor: pointer;">Critiqal</h1>
+      <a href="/dashboard" class="logo">Critiqal</a>
 
       <div style="flex: 1;"></div>
 

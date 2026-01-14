@@ -26,11 +26,11 @@
     }
   }
 
-  // For FeedPost, we don't have author_id, so we compare by username
-  const isOwner = $derived($user?.username === post.author?.username)
+  // For FeedPost, we don't have author_id, so compare by username reactively
+  let isOwner = $derived($user?.username === post.author?.username)
 </script>
 
-<Card class="overflow-hidden">
+<Card class="overflow-hidden p-4">
   <div class="flex gap-3">
     <button
       type="button"
@@ -77,13 +77,14 @@
       </div>
 
       {#if post.image_url}
-        <div class="mt-3 overflow-hidden rounded-lg border border-[color:var(--border)]">
-          <img
+        <div class="mt-3 overflow-hidden rounded-lg border border-[color:var(--border)] bg-[color:var(--card)]">
+            <img
             src={post.image_url}
             alt="Post media"
-            class="max-h-[500px] w-full object-cover"
+            class="w-full max-h-80 object-cover"
             loading="lazy"
             decoding="async"
+            onerror={(e: Event) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
           />
         </div>
       {/if}
