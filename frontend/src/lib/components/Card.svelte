@@ -4,16 +4,20 @@
    * Reusable container with optional header and footer
    */
 
+  import type { Snippet } from 'svelte'
+
   interface $$Props {
     class?: string
     padding?: 'sm' | 'md' | 'lg'
     elevated?: boolean
+    children?: Snippet
   }
 
   let {
     class: className = '',
     padding = 'md',
-    elevated = true
+    elevated = true,
+    children
   }: $$Props = $props()
 
   const paddingClasses = {
@@ -22,9 +26,11 @@
     lg: 'p-6'
   }
 
-  const baseClasses = `bg-white rounded-lg border border-gray-200 ${elevated ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`
+  const baseClasses = `bg-[color:var(--card)] rounded-lg border border-[color:var(--border)] ${elevated ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`
 </script>
 
 <div class="{baseClasses} {paddingClasses[padding]} {className}">
-  <slot />
+  {#if children}
+    {@render children()}
+  {/if}
 </div>

@@ -6,11 +6,11 @@
 
   import '../app.css'
   import { onMount } from 'svelte'
-  import Navigation from '$lib/components/Navigation.svelte'
+  import TopBar from '$lib/components/TopBar.svelte'
+  import Background from '$lib/components/Background.svelte'
   import Toast from '$lib/components/Toast.svelte'
   import { initializeAuth } from '$lib/services/auth'
   import { isAuthLoading } from '$lib/stores/auth'
-  import { theme } from '$lib/stores/theme'
 
   let { children } = $props()
 
@@ -29,34 +29,22 @@
   <link rel="icon" href="/favicon.png" />
 </svelte:head>
 
-<div class="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
-  <Navigation />
+<div class="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)] transition-colors relative">
+  <Background />
 
-  <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-    {#if $isAuthLoading}
-      <div class="flex items-center justify-center py-12">
-        <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-      </div>
-    {:else}
-      {@render children()}
-    {/if}
-  </main>
+  <div class="relative z-10">
+    <TopBar />
 
-  <Toast />
+    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {#if $isAuthLoading}
+        <div class="flex items-center justify-center py-12">
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+        </div>
+      {:else}
+        {@render children()}
+      {/if}
+    </main>
+
+    <Toast />
+  </div>
 </div>
-
-<style>
-@reference "tailwindcss";
-
-  :global(html) {
-    scroll-behavior: smooth;
-  }
-
-  :global(body) {
-    -webkit-font-smoothing: antialiased;
-  }
-
-  :global(a) {
-    @apply text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300;
-  }
-</style>

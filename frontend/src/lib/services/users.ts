@@ -4,7 +4,7 @@
  */
 
 import { get } from './api'
-import type { User } from '$lib/types'
+import type { PublicUser, User } from '$lib/types'
 
 /**
  * Get user by username or ID
@@ -20,9 +20,20 @@ export function searchUsers(query: string, limit: number = 20): Promise<User[]> 
   return get(`/users/search?q=${encodeURIComponent(query)}&limit=${limit}`)
 }
 
+export function searchUsersByUsername(username: string): Promise<PublicUser[]> {
+  return get(`/users/search/${encodeURIComponent(username)}`)
+}
+
 /**
  * Get user profile
  */
 export function getUserProfile(): Promise<User> {
   return get('/auth/me')
+}
+
+/**
+ * Get all users (used as fallback for client-side search when server-side search is unavailable)
+ */
+export function getAllUsers(): Promise<User[]> {
+  return get('/users')
 }

@@ -4,7 +4,7 @@
  */
 
 import { get, post, put, del } from './api'
-import type { Post, PostMedia, PaginatedResponse } from '$lib/types'
+import type { FeedPost, Post, PostMedia, PaginatedResponse } from '$lib/types'
 
 export interface CreatePostRequest {
   content: string
@@ -15,11 +15,20 @@ export interface UpdatePostRequest {
   content: string
 }
 
+export interface CreateFeedPostRequest {
+  body: string
+  image_url?: string
+}
+
 /**
  * Get all posts with pagination
  */
 export function getPosts(page: number = 1, limit: number = 20): Promise<PaginatedResponse<Post>> {
   return get(`/posts?page=${page}&limit=${limit}`)
+}
+
+export function getRecentPosts(limit: number = 20): Promise<FeedPost[]> {
+  return get(`/posts/recent?limit=${limit}`)
 }
 
 /**
@@ -34,6 +43,16 @@ export function getPost(postId: string): Promise<Post> {
  */
 export async function createPost(data: CreatePostRequest): Promise<Post> {
   return post('/posts', data)
+}
+
+export async function createFeedPost(data: CreateFeedPostRequest): Promise<{ message: string; post_id: string }> {
+  const payload: { description: string; photo_url?: string | null; title?: string | null } = {
+    description: data.body,
+    photo_url: data.image_url ?? null,
+    title: null
+  }
+
+  return post('/posts/', payload)
 }
 
 /**

@@ -4,6 +4,7 @@
    * Type-safe, accessible button with loading state
    */
 
+  import type { Snippet } from 'svelte'
   import type { SvelteHTMLElements } from 'svelte/elements'
 
   type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
@@ -16,6 +17,7 @@
     disabled?: boolean
     type?: 'button' | 'submit' | 'reset'
     class?: string
+    children?: Snippet
   }
 
   let {
@@ -29,16 +31,17 @@
     ...props
   }: $$Props = $props()
 
-  const defaultContent = () => {}
-
   const baseClasses =
-    'font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2'
+    'font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--bg)]'
 
   const variantClasses: Record<ButtonVariant, string> = {
-    primary: 'bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-400',
+    primary:
+      'bg-[color:var(--accent-color)] text-white hover:opacity-90 focus:ring-[color:var(--accent-color)]',
+    secondary:
+      'bg-[color:var(--card)] border border-[color:var(--border)] text-[color:var(--fg)] hover:opacity-90 focus:ring-[color:var(--accent-color)]',
     danger: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-400',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-400'
+    ghost:
+      'text-[color:var(--fg)] hover:bg-gray-100/60 dark:hover:bg-white/10 focus:ring-[color:var(--accent-color)]'
   }
 
   const sizeClasses: Record<ButtonSize, string> = {
@@ -60,5 +63,7 @@
   {#if isLoading}
     <span class="inline-block mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
   {/if}
-  {@render (children ?? defaultContent)()}
+  {#if children}
+    {@render children()}
+  {/if}
 </button>

@@ -38,7 +38,7 @@
         <p class="text-sm font-medium">{notification.message}</p>
       </div>
       <button
-        on:click={() => notifications.remove(notification.id)}
+        onclick={() => notifications.remove(notification.id)}
         class="flex-shrink-0 text-lg font-bold opacity-70 hover:opacity-100 transition-opacity"
         aria-label="Close notification"
       >

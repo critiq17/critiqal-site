@@ -7,23 +7,28 @@ import { writable } from 'svelte/store'
 import type { ThemeState } from '$lib/types'
 
 const initialTheme: ThemeState = {
-  mode: 'light',
+  mode: 'dark',
   accentColor: '#3B82F6' // Tailwind blue-500
 }
 
 function createThemeStore() {
-  const { subscribe, set, update } = writable<ThemeState>(initialTheme)
+  let currentTheme = initialTheme
 
-  // Load theme from localStorage on initialization
   if (typeof window !== 'undefined') {
     const stored = localStorage.getItem('theme')
     if (stored) {
       try {
-        set(JSON.parse(stored))
+        currentTheme = JSON.parse(stored)
       } catch {
         // Ignore parse errors
       }
     }
+  }
+
+  const { subscribe, set, update } = writable<ThemeState>(currentTheme)
+
+  if (typeof window !== 'undefined') {
+    applyTheme(currentTheme)
   }
 
   return {

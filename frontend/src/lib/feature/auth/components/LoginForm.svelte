@@ -53,19 +53,13 @@
       isLoading = false
     }
   }
-
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter' && !isLoading) {
-      handleSubmit()
-    }
-  }
 </script>
 
 <Card class="w-full max-w-md">
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Sign In</h1>
-      <p class="mt-2 text-sm text-gray-600">Welcome back to Critiqal</p>
+      <h1 class="text-2xl font-bold text-[color:var(--fg)]">Sign in</h1>
+      <p class="mt-2 text-sm text-[color:var(--muted)]">Welcome back</p>
     </div>
 
     <form onsubmit={handleSubmit} class="space-y-4">
@@ -77,7 +71,6 @@
         error={errors.username}
         required
         disabled={isLoading}
-        on:keydown={handleKeydown}
         autocomplete="username"
       />
 
@@ -89,7 +82,6 @@
         error={errors.password}
         required
         disabled={isLoading}
-        on:keydown={handleKeydown}
         autocomplete="current-password"
       />
 
@@ -106,9 +98,9 @@
     </form>
 
     <div class="text-center text-sm">
-      <p class="text-gray-600">
+      <p class="text-[color:var(--muted)]">
         Don't have an account?{' '}
-        <a href="/sign-up" class="font-semibold text-blue-600 hover:text-blue-700">
+        <a href="/sign-up" class="font-semibold">
           Sign up
         </a>
       </p>

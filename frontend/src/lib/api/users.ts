@@ -1,23 +1,24 @@
-import { api } from './client';
+import { api, upload } from './client'
+import type { User } from '$lib/types'
 
-export async function getUser(username: string) {
-  return api(`/users/${username}`);
+export async function getUser(username: string): Promise<User> {
+  return api<User>(`/users/${username}`)
 }
 
-export async function uploadUserPhoto(username: string, file: File) {
-  const formData = new FormData();
-  formData.append('photo', file);
+export async function searchUsers(username: string): Promise<User[]> {
+  return api<User[]>(`/users/search/${username}`)
+}
 
-  const res = await fetch(`/api/users/${username}/photo`, {
-    method: 'POST',
-    body: formData
-  });
+export async function getMe(): Promise<User> {
+  return api<User>('/users/me')
+}
 
-  if (!res.ok) {
-    const text = await res.text();
-    console.error('Upload failed:', res.status, text);
-    throw new Error(`Upload error: ${res.status}`);
-  }
+export async function uploadUserPhoto(username: string, file: File): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('photo', file)
+  return upload<{ url: string }>(`/users/${username}/photo`, formData)
+}
 
-  return res.json();
+export async function getAllUsers(): Promise<User[]> {
+  return api<User[]>('/users')
 }

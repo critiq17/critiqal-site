@@ -10,6 +10,7 @@ export interface User {
   first_name: string
   last_name: string
   bio?: string
+  photo_url?: string
   avatar_url?: string
   created_at: string
   updated_at: string
@@ -100,4 +101,21 @@ export interface LoadingState {
   isLoading: boolean
   error: string | null
   retry: () => void
+}
+
+export interface PublicUser {
+  username: string
+  email?: string
+  first_name?: string
+  last_name?: string
+  photo_url?: string
+}
+
+export interface FeedPost {
+  id: string
+  author: PublicUser
+  title?: string | null
+  body: string
+  created_at: string
+  image_url?: string | null
 }

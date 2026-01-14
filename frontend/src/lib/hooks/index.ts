@@ -3,8 +3,8 @@
  * Reusable reactive logic
  */
 
-import { derived, type Readable } from 'svelte/store'
-import { debounce } from './helpers'
+import { readable, type Readable } from 'svelte/store'
+import { debounce } from '$lib/utils/helpers'
 
 /**
  * useAsync - Handle async operations with loading/error states
@@ -18,33 +18,50 @@ export function useAsync<T>(
   error: Error | null
   retry: () => Promise<void>
 }> {
-  let data: T | null = $state(null)
-  let loading = $state(false)
-  let error: Error | null = $state(null)
+  return readable<{
+    data: T | null
+    loading: boolean
+    error: Error | null
+    retry: () => Promise<void>
+  }>(
+    {
+      data: null,
+      loading: false,
+      error: null,
+      retry: async () => {}
+    },
+    (set) => {
+      let data: T | null = null
+      let loading = false
+      let error: Error | null = null
 
-  async function execute() {
-    loading = true
-    error = null
-    try {
-      data = await fn()
-    } catch (err) {
-      error = err instanceof Error ? err : new Error(String(err))
-    } finally {
-      loading = false
+      const publish = (retry: () => Promise<void>) => set({ data, loading, error, retry })
+
+      const execute = async () => {
+        loading = true
+        error = null
+        publish(execute)
+
+        try {
+          data = await fn()
+        } catch (err) {
+          error = err instanceof Error ? err : new Error(String(err))
+        } finally {
+          loading = false
+          publish(execute)
+        }
+      }
+
+      publish(execute)
+
+      if (typeof window !== 'undefined') {
+        execute().catch(() => {})
+      }
+
+      return () => {
+        void deps
+      }
     }
-  }
-
-  // Execute on component mount or when deps change
-  if (typeof window !== 'undefined') {
-    execute()
-  }
-
-  return derived(
-    { data, loading, error },
-    (state) => ({
-      ...state,
-      retry: execute
-    })
   )
 }
 
@@ -52,16 +69,31 @@ export function useAsync<T>(
  * useDebounce - Debounce reactive value
  */
 export function useDebounce<T>(value: T, delay: number): Readable<T> {
-  let debouncedValue = $state(value)
+  const isReadable = (v: unknown): v is Readable<T> =>
+    !!v && typeof (v as { subscribe?: unknown }).subscribe === 'function'
 
-  const updateValue = debounce(() => {
-    debouncedValue = value
-  }, delay)
+  if (isReadable(value)) {
+    return readable<T>(undefined as unknown as T, (set) => {
+      let isFirst = true
 
-  return derived(value, () => {
-    updateValue()
-    return debouncedValue
-  })
+      const debouncedSet = debounce((v: T) => {
+        set(v)
+      }, delay)
+
+      const unsubscribe = value.subscribe((v) => {
+        if (isFirst) {
+          isFirst = false
+          set(v)
+          return
+        }
+        debouncedSet(v)
+      })
+
+      return unsubscribe
+    })
+  }
+
+  return readable<T>(value, () => {})
 }
 
 /**
@@ -118,22 +150,17 @@ export function useLocalStorage<T>(
  * useMediaQuery - Reactive media query
  */
 export function useMediaQuery(query: string): Readable<boolean> {
-  let matches = $state(false)
+  return readable(false, (set) => {
+    if (typeof window === 'undefined') return () => {}
 
-  if (typeof window !== 'undefined') {
     const mediaQuery = window.matchMedia(query)
-    matches = mediaQuery.matches
+    set(mediaQuery.matches)
 
     const handler = (e: MediaQueryListEvent) => {
-      matches = e.matches
+      set(e.matches)
     }
 
     mediaQuery.addEventListener('change', handler)
-
-    return derived(matches, (m) => m, () => {
-      mediaQuery.removeEventListener('change', handler)
-    })
-  }
-
-  return derived(false, (m) => m)
+    return () => mediaQuery.removeEventListener('change', handler)
+  })
 }

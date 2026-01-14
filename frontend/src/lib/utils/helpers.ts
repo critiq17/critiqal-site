@@ -79,7 +79,7 @@ export function validatePassword(password: string): {
 /**
  * Debounce function calls
  */
-export function debounce<T extends (...args: unknown[]) => unknown>(
+export function debounce<T extends (...args: any[]) => any>(
   fn: T,
   delay: number
 ): (...args: Parameters<T>) => void {
