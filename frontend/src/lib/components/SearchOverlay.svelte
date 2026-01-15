@@ -1,4 +1,5 @@
 <script lang="ts">
+<<<<<<< HEAD
   import { createEventDispatcher } from 'svelte'
   const dispatch = createEventDispatcher()
   
@@ -7,11 +8,73 @@
   let query = $state('')
   let results = $state<Array<{ username: string; bio?: string; postCount?: number }>>([])
   let isSearching = $state(false)
+=======
+  import { goto } from '$app/navigation'
+  import * as usersService from '$lib/services/users'
+  
+  export let show: boolean = false
+  export let onClose: () => void = () => {}
+
+  let query = $state('')
+  let results = $state<Array<{ username: string; bio?: string; email?: string }>>([])
+  let isSearching = $state(false)
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null
+>>>>>>> dev
 
   function close() {
     query = ''
     results = []
     onClose()
+<<<<<<< HEAD
+=======
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      close()
+    }
+  }
+
+  // Search function with debounce
+  async function search(q: string) {
+    if (!q.trim()) {
+      results = []
+      return
+    }
+
+    isSearching = true
+    
+    try {
+      // Call actual API
+      const users = await usersService.searchUsersByUsername(q)
+      results = users
+    } catch (error) {
+      console.error('Search failed:', error)
+      results = []
+    } finally {
+      isSearching = false
+    }
+  }
+
+  // Watch query changes with debounce
+  $effect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+
+    if (query) {
+      searchTimeout = setTimeout(() => {
+        search(query)
+      }, 300)
+    } else {
+      results = []
+    }
+  })
+
+  function navigateToProfile(username: string) {
+    close()
+    goto(`/profile/${username}`)
+>>>>>>> dev
   }
 
   function handleKeydown(e: KeyboardEvent) {
@@ -58,10 +121,17 @@
     role="dialog"
     aria-modal="true"
     aria-label="Search users"
+<<<<<<< HEAD
     tabindex="-1"
   >
     <div 
       class="search-dialog"
+=======
+  >
+    <div 
+      class="search-dialog"
+      onclick={(e) => e.stopPropagation()}
+>>>>>>> dev
       role="document"
     >
       <!-- Search Header -->
@@ -76,6 +146,10 @@
           placeholder="Search users..."
           class="search-input"
           bind:value={query}
+<<<<<<< HEAD
+=======
+          autofocus
+>>>>>>> dev
         />
         
         <button 
@@ -108,7 +182,15 @@
         {:else if results.length > 0}
           <div class="results-list">
             {#each results as result}
+<<<<<<< HEAD
               <a href={`/profile/${result.username}`} class="result-item">
+=======
+              <button 
+                type="button"
+                class="result-item"
+                onclick={() => navigateToProfile(result.username)}
+              >
+>>>>>>> dev
                 <div class="result-avatar">
                   {result.username[0].toUpperCase()}
                 </div>
@@ -116,15 +198,24 @@
                   <h4 class="result-username">@{result.username}</h4>
                   {#if result.bio}
                     <p class="result-bio">{result.bio}</p>
+<<<<<<< HEAD
                   {/if}
                   {#if result.postCount !== undefined}
                     <p class="result-meta">{result.postCount} posts</p>
+=======
+                  {:else if result.email}
+                    <p class="result-bio">{result.email}</p>
+>>>>>>> dev
                   {/if}
                 </div>
                 <svg class="result-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" d="M9 5l7 7-7 7" />
                 </svg>
+<<<<<<< HEAD
               </a>
+=======
+              </button>
+>>>>>>> dev
             {/each}
           </div>
         {:else}
@@ -146,7 +237,11 @@
   </div>
 {/if}
 
+<<<<<<< HEAD
 <style lang="css">
+=======
+<style>
+>>>>>>> dev
   .search-overlay {
     position: fixed;
     inset: 0;
@@ -156,7 +251,11 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
+<<<<<<< HEAD
     padding: 4rem 1rem;
+=======
+    padding: 6rem 1rem 4rem; /* Add top padding to avoid navbar */
+>>>>>>> dev
     animation: fadeIn 0.15s ease-out;
   }
 
@@ -166,7 +265,11 @@
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 1.25rem;
+<<<<<<< HEAD
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+=======
+    box-shadow: var(--shadow-lg);
+>>>>>>> dev
     animation: slideDown 0.2s ease-out;
   }
 
@@ -260,6 +363,10 @@
   }
 
   .result-item {
+<<<<<<< HEAD
+=======
+    width: 100%;
+>>>>>>> dev
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -268,6 +375,13 @@
     transition: all 0.15s ease;
     text-decoration: none;
     color: inherit;
+<<<<<<< HEAD
+=======
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+>>>>>>> dev
   }
 
   .result-item:hover {
@@ -278,7 +392,11 @@
     width: 2.75rem;
     height: 2.75rem;
     border-radius: 50%;
+<<<<<<< HEAD
     background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+=======
+    background: linear-gradient(135deg, var(--accent-start), var(--secondary-end));
+>>>>>>> dev
     display: flex;
     align-items: center;
     justify-content: center;
@@ -309,12 +427,15 @@
     white-space: nowrap;
   }
 
+<<<<<<< HEAD
   .result-meta {
     font-size: 0.75rem;
     color: var(--muted);
     margin: 0.25rem 0 0 0;
   }
 
+=======
+>>>>>>> dev
   .result-arrow {
     width: 1.125rem;
     height: 1.125rem;
@@ -368,7 +489,11 @@
 
   @media (max-width: 640px) {
     .search-overlay {
+<<<<<<< HEAD
       padding: 2rem 1rem;
+=======
+      padding: 5rem 1rem 2rem;
+>>>>>>> dev
     }
 
     .search-dialog {

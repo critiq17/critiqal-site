@@ -5,8 +5,13 @@
   import { goto } from '$app/navigation'
   import PostCard from '$lib/components/PostCard.svelte'
   import PostComposer from '$lib/components/PostComposer.svelte'
+<<<<<<< HEAD
   import Background from '$lib/components/Background.svelte'
   import * as usersService from '$lib/services/users'
+=======
+  import * as usersService from '$lib/services/users'
+  import { notifications } from '$lib/stores/notifications'
+>>>>>>> dev
   import type { User } from '$lib/types'
 
   interface Post {
@@ -16,8 +21,11 @@
     image_url?: string | null
   }
 
+<<<<<<< HEAD
   const base = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+=======
+>>>>>>> dev
   let profile = $state<User | null>(null)
   let posts = $state<Post[]>([])
   let loading = $state(true)
@@ -31,15 +39,38 @@
 
     loading = true
     try {
+<<<<<<< HEAD
       // Fetch user profile
       profile = await usersService.getUser(username)
       
       const postsRes = await fetch(`${base}/posts/users/${username}`);
       const posts = postsRes.ok ? await postsRes.json() : [];
+=======
+      profile = await usersService.getUser(username)
+      // TODO: Fetch user posts from API
+      posts = []
+>>>>>>> dev
     } catch (err) {
       console.error('Failed to load profile:', err)
     } finally {
       loading = false
+<<<<<<< HEAD
+=======
+    }
+  }
+
+  async function handleDeletePost(postId: string) {
+    if (!confirm('Are you sure you want to delete this post?')) return
+    
+    try {
+      // TODO: API call to delete post
+      // await api.delete(`/posts/${postId}`)
+      
+      posts = posts.filter(p => p.id !== postId)
+      notifications.success('Post deleted successfully')
+    } catch (error) {
+      notifications.error('Failed to delete post')
+>>>>>>> dev
     }
   }
 
@@ -56,8 +87,11 @@
   <title>{profile?.username || 'Profile'} - Critiqal</title>
 </svelte:head>
 
+<<<<<<< HEAD
 <Background />
 
+=======
+>>>>>>> dev
 <main class="profile-page">
   {#if loading}
     <div class="loading-container">
@@ -89,7 +123,11 @@
             </div>
 
             {#if isOwnProfile}
+<<<<<<< HEAD
               <a href="/settings" class="btn-edit">
+=======
+              <a href="/settings" class="btn-edit gradient-brutal">
+>>>>>>> dev
                 Edit Profile
               </a>
             {/if}
@@ -147,13 +185,23 @@
               {#each posts as post (post.id)}
                 <PostCard 
                   post={{ 
+<<<<<<< HEAD
+=======
+                    id: post.id,
+>>>>>>> dev
                     username: profile.username, 
                     content: post.body, 
                     image: post.image_url || undefined, 
                     time: post.created_at, 
                     likes: 0, 
                     comments: 0 
+<<<<<<< HEAD
                   }} 
+=======
+                  }}
+                  showDelete={isOwnProfile}
+                  onDelete={() => handleDeletePost(post.id)}
+>>>>>>> dev
                 />
               {/each}
             {/if}
@@ -199,15 +247,24 @@
       </svg>
       <h2 class="error-title">Profile not found</h2>
       <p class="error-text">The user you're looking for doesn't exist</p>
+<<<<<<< HEAD
       <a href="/dashboard" class="btn-home">Back to Feed</a>
+=======
+      <a href="/dashboard" class="btn-home gradient-brutal">Back to Feed</a>
+>>>>>>> dev
     </div>
   {/if}
 </main>
 
 <style>
   .profile-page {
+<<<<<<< HEAD
     min-height: 100vh;
     padding-top: 4rem;
+=======
+    min-height: calc(100vh - 4rem);
+    padding: 2rem 1rem 3rem;
+>>>>>>> dev
   }
 
   .loading-container,
@@ -258,7 +315,10 @@
   .btn-home {
     padding: 0.75rem 1.5rem;
     border-radius: 0.75rem;
+<<<<<<< HEAD
     background: linear-gradient(135deg, #0EA5E9, #6366F1);
+=======
+>>>>>>> dev
     color: white;
     font-weight: 600;
     font-size: 0.9375rem;
@@ -274,17 +334,26 @@
   .profile-container {
     max-width: 48rem;
     margin: 0 auto;
+<<<<<<< HEAD
     padding: 0 1rem 3rem;
   }
 
   /* Profile Header */
+=======
+  }
+
+>>>>>>> dev
   .profile-header {
     margin-bottom: 2rem;
   }
 
   .profile-cover {
     height: 12rem;
+<<<<<<< HEAD
     background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.1));
+=======
+    background: linear-gradient(135deg, rgba(45, 55, 72, 0.1), rgba(124, 58, 237, 0.1));
+>>>>>>> dev
     border-radius: 1.25rem 1.25rem 0 0;
     position: relative;
   }
@@ -307,7 +376,11 @@
     width: 6rem;
     height: 6rem;
     border-radius: 50%;
+<<<<<<< HEAD
     background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+=======
+    background: linear-gradient(135deg, var(--accent-start), var(--secondary-end));
+>>>>>>> dev
     border: 4px solid var(--card);
     display: flex;
     align-items: center;
@@ -354,9 +427,13 @@
   .btn-edit {
     padding: 0.625rem 1.25rem;
     border-radius: 0.75rem;
+<<<<<<< HEAD
     background: var(--card);
     border: 1px solid var(--border);
     color: var(--fg);
+=======
+    color: white;
+>>>>>>> dev
     font-weight: 600;
     font-size: 0.875rem;
     text-decoration: none;
@@ -365,8 +442,12 @@
   }
 
   .btn-edit:hover {
+<<<<<<< HEAD
     background: var(--bg-2);
     border-color: rgba(59, 130, 246, 0.3);
+=======
+    opacity: 0.9;
+>>>>>>> dev
   }
 
   .stats-row {
@@ -393,7 +474,10 @@
     color: var(--muted);
   }
 
+<<<<<<< HEAD
   /* Tabs */
+=======
+>>>>>>> dev
   .tabs-container {
     display: flex;
     gap: 0.5rem;
@@ -419,10 +503,16 @@
 
   .tab.active {
     color: var(--fg);
+<<<<<<< HEAD
     border-bottom-color: var(--accent);
   }
 
   /* Content */
+=======
+    border-bottom-color: var(--accent-start);
+  }
+
+>>>>>>> dev
   .content-container {
     animation: fadeIn 0.2s ease-out;
   }
@@ -456,7 +546,10 @@
     margin: 0;
   }
 
+<<<<<<< HEAD
   /* About Section */
+=======
+>>>>>>> dev
   .about-section {
     max-width: 42rem;
     margin: 0 auto;
@@ -518,6 +611,15 @@
     }
   }
 
+<<<<<<< HEAD
+=======
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+>>>>>>> dev
   @media (max-width: 640px) {
     .profile-cover {
       height: 8rem;

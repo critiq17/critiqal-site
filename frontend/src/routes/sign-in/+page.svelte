@@ -16,9 +16,7 @@
     }
   })
 
-  async function handleSignIn(e: Event) {
-    e.preventDefault()
-    
+  async function handleSignIn() {
     if (!username || !password) {
       error = 'Please fill in all fields'
       return
@@ -41,6 +39,11 @@
       handleSignIn()
     }
   }
+
+  function handleFormSubmit(e: Event) {
+    e.preventDefault()
+    handleSignIn()
+  }
 </script>
 
 <svelte:head>
@@ -56,7 +59,7 @@
       <p class="auth-subtitle">Sign in to continue to Critiqal</p>
     </div>
 
-    <form class="auth-form" onsubmit={handleSignIn}>
+    <form class="auth-form" onsubmit={handleFormSubmit}>
       <div class="form-group">
         <label for="username" class="form-label">Username</label>
         <input

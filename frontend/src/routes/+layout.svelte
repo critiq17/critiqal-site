@@ -1,12 +1,26 @@
 <script lang="ts">
   import '../app.css'
   import { onMount } from 'svelte'
+<<<<<<< HEAD
+=======
+  import { afterNavigate } from '$app/navigation'
+>>>>>>> dev
   import Navigation from '$lib/components/Navigation.svelte'
   import Toast from '$lib/components/Toast.svelte'
+  import Background from '$lib/components/Background.svelte'
   import { initializeAuth } from '$lib/services/auth'
 
   onMount(() => {
     initializeAuth().catch(console.error)
+  })
+
+  // Trigger page transition on navigation
+  afterNavigate(() => {
+    const bg = document.querySelector('.tropical-background')
+    if (bg) {
+      bg.classList.add('page-transition')
+      setTimeout(() => bg?.classList.remove('page-transition'), 500)
+    }
   })
 </script>
 
@@ -20,6 +34,10 @@
 </svelte:head>
 
 <div class="app-container">
+<<<<<<< HEAD
+=======
+  <Background />
+>>>>>>> dev
   <Navigation />
   <Toast />
   
@@ -37,6 +55,11 @@
   .main-content {
     position: relative;
     z-index: 1;
+<<<<<<< HEAD
+=======
+    /* Add padding-top to prevent content from going under navbar */
+    padding-top: 4rem; /* Height of fixed navbar */
+>>>>>>> dev
   }
 
   :global(body) {

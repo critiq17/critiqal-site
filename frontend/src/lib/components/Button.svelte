@@ -31,7 +31,11 @@
   const baseClasses = 'font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none'
 
   const variantClasses: Record<ButtonVariant, string> = {
+<<<<<<< HEAD
     primary: 'bg-gradient-to-r from-[#0EA5E9] to-[#6366F1] text-white hover:opacity-90',
+=======
+    primary: 'gradient-brutal text-white hover:opacity-90 shadow-md hover:shadow-lg',
+>>>>>>> dev
     secondary: 'bg-[color:var(--card)] border border-[color:var(--border)] text-[color:var(--fg)] hover:bg-[color:var(--bg-2)]',
     danger: 'bg-[color:var(--danger)] text-white hover:opacity-90',
     ghost: 'text-[color:var(--fg)] hover:bg-[color:var(--bg-2)]'
@@ -43,7 +47,7 @@
     lg: 'px-6 py-3 text-lg'
   }
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
+  const classes = $derived(`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`)
 </script>
 
 <button

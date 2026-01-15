@@ -6,7 +6,10 @@
   import { goto } from '$app/navigation'
   import PostCard from '$lib/components/PostCard.svelte'
   import PostComposer from '$lib/components/PostComposer.svelte'
+<<<<<<< HEAD
   import Background from '$lib/components/Background.svelte'
+=======
+>>>>>>> dev
 
   $effect.pre(() => {
     if (browser && !$isAuthenticated) {
@@ -28,8 +31,11 @@
   <title>Feed - Critiqal</title>
 </svelte:head>
 
+<<<<<<< HEAD
 <Background />
 
+=======
+>>>>>>> dev
 <main class="dashboard-page">
   <div class="dashboard-header">
     <h1 class="page-title">
@@ -53,13 +59,22 @@
         <div class="post-item" style="animation-delay: {i * 50}ms;">
           <PostCard 
             post={{ 
+<<<<<<< HEAD
+=======
+              id: post.id,
+>>>>>>> dev
               username: post.author?.username || 'Unknown', 
               content: post.body, 
               image: post.image_url || undefined, 
               time: post.created_at, 
               likes: 0, 
               comments: 0 
+<<<<<<< HEAD
             }} 
+=======
+            }}
+            showDelete={false}
+>>>>>>> dev
           />
         </div>
       {/each}
@@ -71,7 +86,11 @@
   .dashboard-page {
     max-width: 48rem;
     margin: 0 auto;
+<<<<<<< HEAD
     padding: 7rem 1rem 3rem;
+=======
+    padding: 3rem 1rem;
+>>>>>>> dev
   }
 
   .dashboard-header {
@@ -86,7 +105,11 @@
   }
 
   .username-highlight {
+<<<<<<< HEAD
     background: linear-gradient(135deg, #0EA5E9, #6366F1);
+=======
+    background: linear-gradient(135deg, var(--accent-start), var(--secondary-end));
+>>>>>>> dev
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -147,7 +170,11 @@
 
   @media (max-width: 640px) {
     .dashboard-page {
+<<<<<<< HEAD
       padding: 6rem 1rem 2rem;
+=======
+      padding: 2rem 1rem;
+>>>>>>> dev
     }
 
     .dashboard-header {
