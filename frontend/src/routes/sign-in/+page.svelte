@@ -1,88 +1,44 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { scale } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
-  
-  let username = '';
-  let password = '';
-  let error = '';
-  let loading = false;
+  import { onMount } from 'svelte'
+  import { isAuthenticated, authError } from '$lib/stores/auth'
+  import { goto } from '$app/navigation'
+  import * as authService from '$lib/services/auth'
+  import Background from '$lib/components/Background.svelte'
 
-  async function handleLogin() {
+  let username = $state('')
+  let password = $state('')
+  let loading = $state(false)
+  let error = $state('')
+
+  onMount(() => {
+    if ($isAuthenticated) {
+      goto('/dashboard').catch(console.error)
+    }
+  })
+
+  async function handleSignIn(e: Event) {
+    e.preventDefault()
+    
     if (!username || !password) {
-      error = 'Please fill in all fields';
-      setTimeout(() => error = '', 3000);
-      return;
+      error = 'Please fill in all fields'
+      return
     }
 
-    loading = true;
-    error = '';
-    
+    loading = true
+    error = ''
+
     try {
-      const res = await fetch('http://localhost:8080/api/auth/sign-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        
-        console.log('📦 Sign-in response:', data);
-        
-        if (!data.token) {
-          error = 'Invalid server response - no token';
-          setTimeout(() => error = '', 3000);
-          return;
-        }
-
-        // Decode JWT to verify it has user_id and username
-        try {
-          const payload = data.token.split('.')[1];
-          const decoded = JSON.parse(atob(payload));
-          console.log('🔓 JWT payload:', decoded);
-          
-          if (!decoded.user_id) {
-            console.error('❌ JWT missing user_id claim');
-            error = 'Invalid token - missing user_id';
-            setTimeout(() => error = '', 3000);
-            return;
-          }
-          
-          if (!decoded.username) {
-            console.error('❌ JWT missing username claim');
-            error = 'Invalid token - missing username';
-            setTimeout(() => error = '', 3000);
-            return;
-          }
-        } catch (decodeErr) {
-          console.error('❌ Failed to decode JWT:', decodeErr);
-          error = 'Invalid token format';
-          setTimeout(() => error = '', 3000);
-          return;
-        }
-
-        // Store token and username
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('username', data.user?.username || username);
-        
-        console.log('✅ Login successful, redirecting to dashboard');
-        
-        goto('/dashboard');
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        console.error('❌ Login failed:', res.status, errorData);
-        error = errorData.error || 'Invalid username or password';
-        setTimeout(() => error = '', 3000);
-      }
+      await authService.signIn({ username, password })
+      goto('/dashboard').catch(console.error)
     } catch (err) {
-      console.error('❌ Login error:', err);
-      error = 'Connection failed - is server running?';
-      setTimeout(() => error = '', 3000);
-    } finally {
-      loading = false;
+      error = err instanceof Error ? err.message : 'Sign in failed'
+      loading = false
+    }
+  }
+
+  function handleKeypress(e: KeyboardEvent) {
+    if (e.key === 'Enter' && !loading) {
+      handleSignIn()
     }
   }
 </script>
@@ -91,96 +47,245 @@
   <title>Sign In - Critiqal</title>
 </svelte:head>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-  <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm" in:scale={{ duration: 400, start: 0.95, easing: cubicOut }}>
-    <h1 class="text-2xl font-semibold text-center mb-6 text-gray-800">
-      Sign in to Critiqal
-    </h1>
+<Background />
 
-    <div class="space-y-4">
-      <input
-        type="text"
-        placeholder="Username"
-        bind:value={username}
-        class="input-field"
-        disabled={loading}
-      />
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <h1 class="auth-title">Welcome Back</h1>
+      <p class="auth-subtitle">Sign in to continue to Critiqal</p>
+    </div>
 
-      <input
-        type="password"
-        placeholder="Password"
-        bind:value={password}
-        on:keydown={(e) => e.key === 'Enter' && handleLogin()}
-        class="input-field"
-        disabled={loading}
-      />
+    <form class="auth-form" onsubmit={handleSignIn}>
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input
+          type="text"
+          id="username"
+          bind:value={username}
+          placeholder="Enter your username"
+          class="form-input"
+          disabled={loading}
+          onkeypress={handleKeypress}
+          autocomplete="username"
+        />
+      </div>
 
-      {#if error}
-        <p class="text-sm text-red-500 text-center error-shake">{error}</p>
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input
+          type="password"
+          id="password"
+          bind:value={password}
+          placeholder="Enter your password"
+          class="form-input"
+          disabled={loading}
+          onkeypress={handleKeypress}
+          autocomplete="current-password"
+        />
+      </div>
+
+      {#if error || $authError}
+        <div class="error-message">
+          {error || $authError}
+        </div>
       {/if}
 
       <button
-        on:click={handleLogin}
-        class="btn-submit"
+        type="submit"
         disabled={loading}
+        class="btn-submit"
       >
         {loading ? 'Signing in...' : 'Sign In'}
       </button>
+    </form>
+
+    <div class="auth-divider">
+      <span>New to Critiqal?</span>
     </div>
 
-    <p class="text-center text-gray-500 text-sm mt-4">
-      Don't have an account?
-      <a href="/sign-up" class="text-purple-600 hover:underline font-medium">Sign Up</a>
-    </p>
+    <a href="/sign-up" class="btn-secondary">
+      Create Account
+    </a>
   </div>
 </div>
 
 <style>
-  .input-field {
+  .auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .auth-card {
     width: 100%;
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    padding: 0.625rem;
-    outline: none;
+    max-width: 26rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .auth-header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .auth-title {
+    font-size: 1.875rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .auth-subtitle {
+    font-size: 0.9375rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    font-size: 0.9375rem;
+    font-family: inherit;
     transition: all 0.2s ease;
   }
 
-  .input-field:focus {
-    box-shadow: 0 0 0 2px #9333ea;
+  .form-input::placeholder {
+    color: var(--muted);
   }
 
-  .input-field:disabled {
-    background: #f3f4f6;
+  .form-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .form-input:disabled {
+    opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  .error-message {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+    font-size: 0.875rem;
   }
 
   .btn-submit {
     width: 100%;
-    background: #9333ea;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1);
     color: white;
-    padding: 0.625rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
   .btn-submit:hover:not(:disabled) {
-    background: #7e22ce;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: scale(1.02);
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   }
 
   .btn-submit:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-5px); }
-    75% { transform: translateX(5px); }
+  .auth-divider {
+    margin: 1.5rem 0;
+    text-align: center;
+    position: relative;
   }
 
-  .error-shake {
-    animation: shake 0.3s ease-in-out;
+  .auth-divider::before,
+  .auth-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(50% - 5rem);
+    height: 1px;
+    background: var(--border);
+  }
+
+  .auth-divider::before {
+    left: 0;
+  }
+
+  .auth-divider::after {
+    right: 0;
+  }
+
+  .auth-divider span {
+    font-size: 0.875rem;
+    color: var(--muted);
+    background: var(--card);
+    padding: 0 1rem;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 0.875rem;
+    border-radius: 0.75rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-2);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  @media (max-width: 640px) {
+    .auth-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .auth-title {
+      font-size: 1.5rem;
+    }
   }
 </style>

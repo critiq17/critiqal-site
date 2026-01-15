@@ -28,7 +28,7 @@ func ToUserApi(u *user.User) *UserApi {
 		//UserID:    u.ID,
 		Username:  u.Username,
 		Email:     u.Email,
-		Password:  u.Password,
+		Password:  "",
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		PhotoURL:  u.PhotoURL,

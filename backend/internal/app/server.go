@@ -1,6 +1,9 @@
 package app
 
 import (
+	"os"
+	"strings"
+
 	"github.com/critiq17/critiqal-site/config"
 	"github.com/critiq17/critiqal-site/internal/api/handlers"
 	"github.com/critiq17/critiqal-site/internal/api/routes"
@@ -32,10 +35,33 @@ func SetupApp() (*fiber.App, error) {
 
 	app := fiber.New()
 
+	normalizeCSV := func(s string) string {
+		parts := strings.Split(s, ",")
+		out := make([]string, 0, len(parts))
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				out = append(out, p)
+			}
+		}
+		return strings.Join(out, ",")
+	}
+
+	allowOrigins := normalizeCSV(os.Getenv("CORS_ALLOW_ORIGINS"))
+	if allowOrigins == "" {
+		allowOrigins = "http://localhost:5173,http://localhost:3001,http://localhost:81"
+	}
+
+	allowHeaders := os.Getenv("CORS_ALLOW_HEADERS")
+	if strings.TrimSpace(allowHeaders) == "" {
+		allowHeaders = "Origin, Content-Type, Accept, Authorization"
+	}
+
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
-		AllowHeaders: "Origins, Content-Type, Accept, Authorization",
+		AllowOrigins:     allowOrigins,
+		AllowMethods:     "GET, POST, PUT, DELETE, OPTIONS",
+		AllowHeaders:     allowHeaders,
+		AllowCredentials: true,
 	}))
 
 	handlers := handlers.NewHandlers(userService, postService)

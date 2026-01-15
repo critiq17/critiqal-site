@@ -23,13 +23,16 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		auth.Post("/sign-up", handlers.SignUp)
 		auth.Post("/sign-in", handlers.SignIn)
+		auth.Post("/refresh", handlers.Refresh)
+		auth.Post("/sign-out", handlers.SignOut)
+		auth.Post("/me", handlers.UserIdentity, handlers.AuthMe)
 	}
 
 	// for search, get, profile, photo
 	users := api.Group("/users", handlers.UserIdentity)
 	{
 		// CRUD (without update)
-		users.Post("/", handlers.AddUser)
+		users.Post("/", handlers.CreateUser)
 		users.Get("/", handlers.GetUsers)
 		users.Get("/:username", handlers.GetByUsername)
 		users.Delete("/:id", handlers.DeleteUser)

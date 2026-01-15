@@ -105,7 +105,7 @@ func (r *UserRepository) GetUsers() ([]user.User, error) {
 func (r *UserRepository) GetByID(id string) (*user.User, error) {
 	var model User
 
-	err := r.db.Where("id = ? AND deleted_at IS NULL", id).Find(&model).Error
+	err := r.db.Where("id = ? AND deleted_at IS NULL", id).First(&model).Error
 
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (r *UserRepository) GetUserByUsername(username string) (*user.User, error) 
 
 	var model User
 
-	err := r.db.Where("username = ? AND deleted_at IS NULL", username).Find(&model).Error
+	err := r.db.Where("username = ? AND deleted_at IS NULL", username).First(&model).Error
 
 	if err != nil {
 		return nil, err

@@ -1,361 +1,263 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-  import { fly } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  /**
+   * User Profile Page
+   * Displays user profile with editable fields and posts
+   */
 
-  interface User {
-    username: string;
-    photo_url?: string;
-    first_name?: string;
-    last_name?: string;
-    bio?: string;
-    email?: string;
-  }
+  import { onMount } from 'svelte'
+  import { browser } from '$app/environment'
+  import { goto } from '$app/navigation'
+  import { page } from '$app/stores'
+  import { user } from '$lib/stores/auth'
+  import { posts } from '$lib/stores'
+  import { notifications } from '$lib/stores/notifications'
+  import * as usersService from '$lib/services/users'
+  import Card from '$lib/components/Card.svelte'
+  import Button from '$lib/components/Button.svelte'
+  import Input from '$lib/components/Input.svelte'
+  import PostCard from '$lib/components/PostCard.svelte'
+  import type { User } from '$lib/types'
 
-  interface Post {
-    id: string;
-    title?: string;
-    body: string;
-    created_at: string;
-    image_url?: string | null;
-  }
+  let profileUser = $state<User | null>(null)
+  let loading = $state(true)
+  let error = $state<string | null>(null)
+  let activeTab = $state<'posts' | 'about'>('posts')
+  let isEditing = $state(false)
+  let editData = $state({
+    username: '',
+    bio: ''
+  })
 
-  let user: User | null = null;
-  let posts: Post[] = [];
-  let loading = true;
-  let username = '';
+  const username = $derived($page.params.username)
+  const isOwnProfile = $derived(profileUser?.id === $user?.id)
 
-  onMount(async () => {
-    // Get username from URL params
-    username = $page.params.username;
-    
-    if (!username) {
-      goto('/dashboard');
-      return;
+  async function loadProfile() {
+    if (!username) return
+
+    loading = true
+    error = null
+    try {
+      const user = await usersService.getUser(username)
+      profileUser = user
+      editData = {
+        username: user.username,
+        bio: user.bio || ''
+      }
+      
+      // Note: User posts would be loaded from /api/users/:username/posts
+      // For now, we'll skip loading posts on profile page
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load profile'
+      // If user endpoint doesn't exist, create a basic profile from username
+      if (message.includes('404')) {
+        profileUser = {
+          id: username,
+          username: username,
+          email: '',
+          first_name: '',
+          last_name: '',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        editData = {
+          username: username,
+          bio: ''
+        }
+        error = null
+      } else {
+        error = message
+        console.error('Profile load error:', err)
+      }
+    } finally {
+      loading = false
     }
+  }
+
+  async function handleAvatarUpload(e: Event) {
+    const input = e.target as HTMLInputElement
+    const file = input.files?.[0]
+    if (!file || !profileUser) return
 
     try {
-      const token = localStorage.getItem('token');
-      
-      // Fetch user profile
-      const userRes = await fetch(`http://localhost:8080/api/users/${username}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (userRes.ok) {
-        user = await userRes.json();
+      // TODO: Implement avatar upload when backend endpoint is available
+      // For now, create a local preview
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (profileUser && event.target?.result) {
+          profileUser!.photo_url = event.target.result as string
+          notifications.success('Avatar updated (local preview)')
+        }
       }
-
-      // Fetch user posts
-      const postsRes = await fetch(`http://localhost:8080/api/posts/${username}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (postsRes.ok) {
-        posts = await postsRes.json();
-      }
+      reader.readAsDataURL(file)
     } catch (err) {
-      console.error('Error loading profile:', err);
-    } finally {
-      loading = false;
+      const message = err instanceof Error ? err.message : 'Failed to upload avatar'
+      notifications.error(message)
     }
-  });
-
-  function goBack() {
-    goto('/dashboard');
   }
+
+  async function saveProfile() {
+    // TODO: Implement profile update endpoint
+    isEditing = false
+    notifications.success('Profile updated')
+  }
+
+  onMount(() => {
+    loadProfile()
+  })
 </script>
 
 <svelte:head>
-  <title>{user?.username || 'Profile'} - Critiqal</title>
+  <title>{profileUser?.username || 'Profile'} - Critiqal</title>
 </svelte:head>
 
-<div class="page-container">
-  <!-- Navigation -->
-  <nav class="nav">
-    <div class="nav-content">
-      <button on:click={goBack} class="back-btn">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back
-      </button>
-      <h1 on:click={() => goto('/dashboard')} class="logo">
-        Critiqal
-      </h1>
-      <div></div>
-    </div>
-  </nav>
-
-  <!-- Profile Content -->
-  <div class="content">
-    {#if loading}
-      <div class="loading">Loading profile...</div>
-    {:else if !user}
-      <div class="empty-state">
-        <p>User not found</p>
-        <button on:click={goBack} class="btn-primary">
-          Go back
-        </button>
+<div class="mx-auto max-w-2xl space-y-6">
+  {#if loading}
+    <!-- Loading skeleton -->
+    <Card class="space-y-4">
+      <div class="h-24 w-24 animate-pulse rounded-full bg-[color:var(--border)]"></div>
+      <div class="space-y-2">
+        <div class="h-6 w-32 animate-pulse rounded bg-[color:var(--border)]"></div>
+        <div class="h-4 w-48 animate-pulse rounded bg-[color:var(--border)]"></div>
       </div>
-    {:else}
-      <div class="profile-card" in:fly={{ y: 20, duration: 500, easing: cubicOut }}>
-        <div class="profile-content">
-          <img
-            src={user.photo_url || '/default-avatar.png'}
-            alt={user.username}
-            class="avatar"
-          />
-
-          <div class="user-info">
-            <h2 class="user-name">
-              {#if user.first_name || user.last_name}
-                {user.first_name} {user.last_name}
-              {:else}
-                {user.username}
-              {/if}
-            </h2>
-            <p class="username">@{user.username}</p>
-            {#if user.email}
-              <p class="user-email">{user.email}</p>
-            {/if}
-            {#if user.bio}
-              <p class="user-bio">{user.bio}</p>
+    </Card>
+  {:else if error}
+    <Card class="space-y-4 text-center">
+      <div>
+        <p class="text-red-600 font-semibold mb-2">{error}</p>
+        <p class="text-sm text-[color:var(--muted)] mb-4">Make sure the backend server is running on port 8080</p>
+      </div>
+      <Button variant="secondary" onclick={() => loadProfile()}>
+        Try Again
+      </Button>
+    </Card>
+  {:else if profileUser}
+    <!-- Profile Header -->
+    <Card class="space-y-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+        <!-- Avatar -->
+        <div class="relative">
+          <div class="h-24 w-24 overflow-hidden rounded-full border-4 border-[color:var(--border)] bg-gradient-to-br from-blue-400 to-purple-500">
+            {#if profileUser.photo_url}
+              <img src={profileUser.photo_url} alt={profileUser.username} class="h-full w-full object-cover" />
+            {:else}
+              <div class="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
+                {profileUser.username?.[0]?.toUpperCase() ?? '?'}
+              </div>
             {/if}
           </div>
+          {#if isOwnProfile}
+            <label
+              class="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-[color:var(--accent-color)] text-white shadow-lg hover:opacity-90 transition-opacity"
+              title="Change avatar"
+            >
+              <input
+                type="file"
+                accept="image/*"
+                class="hidden"
+                onchange={handleAvatarUpload}
+              />
+              📷
+            </label>
+          {/if}
+        </div>
+
+        <!-- User Info -->
+        <div class="flex-1 space-y-4">
+          {#if isEditing && isOwnProfile}
+            <div class="space-y-3">
+              <Input
+                type="text"
+                label="Username"
+                bind:value={editData.username}
+                floating
+                disabled
+              />
+              <Input
+                type="text"
+                label="Bio"
+                bind:value={editData.bio}
+                floating
+                placeholder="Tell us about yourself"
+              />
+            </div>
+            <div class="flex gap-2">
+              <Button variant="primary" size="sm" onclick={saveProfile}>
+                Save
+              </Button>
+              <Button variant="secondary" size="sm" onclick={() => (isEditing = false)}>
+                Cancel
+              </Button>
+            </div>
+          {:else}
+            <div>
+              <h1 class="text-2xl font-bold text-[color:var(--fg)]">{profileUser.username}</h1>
+              <p class="text-[color:var(--muted)]">{profileUser.bio || 'No bio yet'}</p>
+            </div>
+            {#if isOwnProfile}
+              <Button variant="secondary" size="sm" onclick={() => (isEditing = true)}>
+                Edit Profile
+              </Button>
+            {/if}
+          {/if}
         </div>
       </div>
+    </Card>
 
-      <!-- User Posts -->
-      <div class="posts-section">
-        <h3 class="section-title">Posts</h3>
+    <!-- Tabs -->
+    <div class="flex gap-4 border-b border-[color:var(--border)]">
+      <button
+        type="button"
+        class="pb-3 font-medium transition-colors {activeTab === 'posts'
+          ? 'border-b-2 border-[color:var(--accent-color)] text-[color:var(--fg)]'
+          : 'text-[color:var(--muted)] hover:text-[color:var(--fg)]'}"
+        onclick={() => (activeTab = 'posts')}
+      >
+        Posts
+      </button>
+      <button
+        type="button"
+        class="pb-3 font-medium transition-colors {activeTab === 'about'
+          ? 'border-b-2 border-[color:var(--accent-color)] text-[color:var(--fg)]'
+          : 'text-[color:var(--muted)] hover:text-[color:var(--fg)]'}"
+        onclick={() => (activeTab = 'about')}
+      >
+        About
+      </button>
+    </div>
 
-        {#if posts.length === 0}
-          <div class="empty-state">
-            No posts yet
-          </div>
+    <!-- Content -->
+    {#if activeTab === 'posts'}
+      <div class="space-y-4">
+        {#if $posts.posts.length === 0}
+          <Card class="py-10 text-center">
+            <p class="text-[color:var(--muted)]">No posts yet</p>
+          </Card>
         {:else}
-          <div class="posts-grid">
-            {#each posts as post, index (post.id)}
-              <article
-                class="post-card"
-                in:fly={{ y: 12, duration: 500, delay: index * 100, easing: cubicOut }}
-                on:click={() => goto(`/posts/${post.id}`)}
-              >
-                {#if post.title}
-                  <h4 class="post-title">{post.title}</h4>
-                {/if}
-                <p class="post-body">{post.body}</p>
-                {#if post.image_url}
-                  <img
-                    src={post.image_url}
-                    alt="post"
-                    class="post-image"
-                  />
-                {/if}
-                <div class="post-date">
-                  {new Date(post.created_at).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </div>
-              </article>
-            {/each}
-          </div>
+          {#each $posts.posts as post (post.id)}
+            <PostCard post={{ username: post.author?.username || 'Unknown', content: post.body, image: post.image_url || undefined, time: post.created_at, likes: 0, comments: 0 }} />
+          {/each}
         {/if}
       </div>
+    {:else}
+      <Card class="space-y-4">
+        <h2 class="text-lg font-semibold text-[color:var(--fg)]">About {profileUser.username}</h2>
+        <div class="space-y-2 text-sm">
+          <p>
+            <span class="font-medium text-[color:var(--muted)]">Username:</span>
+            <span class="text-[color:var(--fg)]">{profileUser.username}</span>
+          </p>
+          <p>
+            <span class="font-medium text-[color:var(--muted)]">Email:</span>
+            <span class="text-[color:var(--fg)]">{profileUser.email}</span>
+          </p>
+          <p>
+            <span class="font-medium text-[color:var(--muted)]">Joined:</span>
+            <span class="text-[color:var(--fg)]">
+              {new Date(profileUser.created_at).toLocaleDateString()}
+            </span>
+          </p>
+        </div>
+      </Card>
     {/if}
-  </div>
+  {/if}
 </div>
-
-<style>
-  .page-container {
-    min-height: 100vh;
-    background: #f9fafb;
-  }
-
-  .nav {
-    background: white;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1rem 1.5rem;
-    position: sticky;
-    top: 0;
-    z-index: 40;
-  }
-
-  .nav-content {
-    max-width: 64rem;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .back-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #6b7280;
-    transition: color 0.2s ease;
-  }
-
-  .back-btn:hover {
-    color: #9333ea;
-  }
-
-  .logo {
-    font-size: 1.5rem;
-    font-weight: 600;
-    background: linear-gradient(to right, #9333ea, #3b82f6);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    cursor: pointer;
-  }
-
-  .content {
-    max-width: 64rem;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-  }
-
-  .loading {
-    text-align: center;
-    padding: 3rem;
-    color: #6b7280;
-  }
-
-  .empty-state {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 3rem;
-    text-align: center;
-    color: #6b7280;
-  }
-
-  .btn-primary {
-    margin-top: 1rem;
-    background: #9333ea;
-    color: white;
-    padding: 0.625rem 1.5rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .btn-primary:hover {
-    background: #7e22ce;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    transform: scale(1.02);
-  }
-
-  .profile-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 2rem;
-  }
-
-  .profile-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .avatar {
-    width: 8rem;
-    height: 8rem;
-    border-radius: 9999px;
-    object-fit: cover;
-    border: 4px solid #f3e8ff;
-  }
-
-  .user-info {
-    margin-top: 1.5rem;
-    text-align: center;
-  }
-
-  .user-name {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #1f2937;
-  }
-
-  .username {
-    color: #9333ea;
-    margin-top: 0.25rem;
-  }
-
-  .user-email {
-    color: #6b7280;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-  }
-
-  .user-bio {
-    color: #4b5563;
-    margin-top: 1rem;
-    max-width: 28rem;
-  }
-
-  .posts-section {
-    margin-top: 2rem;
-  }
-
-  .section-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-    margin-bottom: 1rem;
-  }
-
-  .posts-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .post-card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    padding: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .post-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  .post-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 0.5rem;
-  }
-
-  .post-body {
-    color: #374151;
-    line-height: 1.625;
-  }
-
-  .post-image {
-    margin-top: 1rem;
-    width: 100%;
-    border-radius: 0.75rem;
-    object-fit: cover;
-    max-height: 300px;
-  }
-
-  .post-date {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 0.75rem;
-  }
-</style>

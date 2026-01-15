@@ -1,7 +1,8 @@
 import { api } from './client';
+import type { AuthResponse, RegisterRequest } from '$lib/types'
 
 export async function login(data: { username: string; password: string }) {
-  const res = await api('/auth/sign-in', {
+  const res = await api<AuthResponse>('/auth/sign-in', {
     method: 'POST',
     body: JSON.stringify(data)
   });
@@ -14,15 +15,9 @@ export async function login(data: { username: string; password: string }) {
   return res
 }
 
-export async function register(data: { 
-    username: string; 
-    email: string; 
-    password: string; 
-    first_name: string; 
-    last_name: string; 
-  }) {
+export async function register(data: RegisterRequest) {
 
-  const res = await api('/auth/sign-up', {
+  const res = await api<AuthResponse>('/auth/sign-up', {
     method: 'POST',
     body: JSON.stringify(data)
   });
