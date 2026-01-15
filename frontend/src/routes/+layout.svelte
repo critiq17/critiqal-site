@@ -1,50 +1,61 @@
 <script lang="ts">
-  /**
-   * Root Layout
-   * Main app wrapper with navigation and theme support
-   */
-
   import '../app.css'
   import { onMount } from 'svelte'
-  import TopBar from '$lib/components/TopBar.svelte'
-  import Background from '$lib/components/Background.svelte'
+  import { afterNavigate } from '$app/navigation'
+  import Navigation from '$lib/components/Navigation.svelte'
   import Toast from '$lib/components/Toast.svelte'
+  import Background from '$lib/components/Background.svelte'
   import { initializeAuth } from '$lib/services/auth'
-  import { isAuthLoading } from '$lib/stores/auth'
 
-  let { children } = $props()
-
-  // Initialize authentication on app load
   onMount(() => {
     initializeAuth().catch(console.error)
+  })
+
+  // Trigger page transition on navigation
+  afterNavigate(() => {
+    const bg = document.querySelector('.tropical-background')
+    if (bg) {
+      bg.classList.add('page-transition')
+      setTimeout(() => bg?.classList.remove('page-transition'), 500)
+    }
   })
 </script>
 
 <svelte:head>
-  <title>Critiqal - Share Your Thoughts</title>
-  <meta name="description" content="Critiqal: Share your thoughts, connect with others, and build your community." />
+  <title>Critiqal - Private Social Network</title>
+  <meta name="description" content="Open-source, privacy-first social network" />
   <meta property="og:title" content="Critiqal" />
-  <meta property="og:description" content="Share your thoughts, connect with others, and build your community." />
+  <meta property="og:description" content="Open-source, privacy-first social network" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="icon" href="/favicon.png" />
 </svelte:head>
 
-<div class="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)] transition-colors relative">
+<div class="app-container">
   <Background />
-
-  <div class="relative z-10">
-    <TopBar />
-
-    <main class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      {#if $isAuthLoading}
-        <div class="flex items-center justify-center py-12">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
-        </div>
-      {:else}
-        {@render children()}
-      {/if}
-    </main>
-
-    <Toast />
-  </div>
+  <Navigation />
+  <Toast />
+  
+  <main class="main-content">
+    <slot />
+  </main>
 </div>
+
+<style>
+  .app-container {
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .main-content {
+    position: relative;
+    z-index: 1;
+    /* Add padding-top to prevent content from going under navbar */
+    padding-top: 4rem; /* Height of fixed navbar */
+  }
+
+  :global(body) {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+</style>

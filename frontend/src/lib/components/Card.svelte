@@ -1,9 +1,4 @@
 <script lang="ts">
-  /**
-   * Card Component
-   * Reusable container with optional header and footer
-   */
-
   import type { Snippet } from 'svelte'
 
   interface $$Props {
@@ -26,7 +21,7 @@
     lg: 'p-6'
   }
 
-  const baseClasses = `bg-[color:var(--card)] rounded-lg border border-[color:var(--border)] ${elevated ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`
+  const baseClasses = $derived(`bg-[color:var(--card)] rounded-lg border border-[color:var(--border)] ${elevated ? 'shadow-sm hover:shadow-md' : ''} transition-shadow duration-200`)
 </script>
 
 <div class="{baseClasses} {paddingClasses[padding]} {className}">

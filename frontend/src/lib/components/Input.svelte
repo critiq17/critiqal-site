@@ -1,9 +1,4 @@
 <script lang="ts">
-  /**
-   * Input Component
-   * Type-safe text input with validation and error states
-   */
-
   import type { SvelteHTMLElements } from 'svelte/elements'
 
   interface $$Props extends Omit<SvelteHTMLElements['input'], 'type' | 'class'> {
@@ -30,14 +25,12 @@
 
   const inputId = (props.id as string) || `input-${Math.random().toString(36).slice(2)}`
 
-  const baseClasses =
-    'w-full px-4 py-2 border rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0'
-  const normalClasses =
-    'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--fg)] placeholder-[color:var(--muted)]'
-  const errorClasses = 'border-red-500 bg-red-50 text-gray-900 placeholder-red-300'
-  const disabledClasses = 'opacity-60 cursor-not-allowed'
+  const baseClasses = 'w-full px-4 py-2 border rounded-lg transition-all duration-200 focus:outline-none'
+  const normalClasses = 'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--fg)] placeholder-[color:var(--muted)]'
+  const errorClasses = 'border-red-500 bg-red-50 dark:bg-red-950/20'
+  const focusClasses = 'focus:border-[color:var(--accent-start)] focus:ring-2 focus:ring-[color:var(--accent-start)]/20'
 
-  const classes = `${baseClasses} ${error ? errorClasses : normalClasses} ${disabled ? disabledClasses : ''} ${className}`
+  const classes = $derived(`${baseClasses} ${error ? errorClasses : normalClasses} ${focusClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`)
 </script>
 
 <div class="w-full">
@@ -53,16 +46,15 @@
         aria-invalid={!!error}
         {...props}
         id={inputId}
-        aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
       />
       {#if label}
         <label
           for={inputId}
-          class="pointer-events-none absolute left-4 top-2 text-xs font-medium text-[color:var(--muted)] transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs"
+          class="pointer-events-none absolute left-4 top-2 text-xs font-medium text-[color:var(--muted)] transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs"
         >
           {label}
           {#if required}
-            <span class="text-red-500" aria-label="required">*</span>
+            <span class="text-red-500">*</span>
           {/if}
         </label>
       {/if}
@@ -72,7 +64,7 @@
       <label for={inputId} class="mb-1.5 block text-sm font-medium text-[color:var(--fg)]">
         {label}
         {#if required}
-          <span class="text-red-500" aria-label="required">*</span>
+          <span class="text-red-500">*</span>
         {/if}
       </label>
     {/if}
@@ -86,13 +78,12 @@
       aria-invalid={!!error}
       {...props}
       id={inputId}
-      aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
     />
   {/if}
 
   {#if error}
-    <p id="{inputId}-error" class="mt-1 text-sm text-red-600">{error}</p>
+    <p class="mt-1 text-sm text-red-500">{error}</p>
   {:else if helperText}
-    <p id="{inputId}-helper" class="mt-1 text-sm text-[color:var(--muted)]">{helperText}</p>
+    <p class="mt-1 text-sm text-[color:var(--muted)]">{helperText}</p>
   {/if}
 </div>
