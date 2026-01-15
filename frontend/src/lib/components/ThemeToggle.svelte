@@ -37,7 +37,7 @@
   {/if}
 </button>
 
-<style>
+<style lang="css">
   button {
     color: var(--fg);
   }

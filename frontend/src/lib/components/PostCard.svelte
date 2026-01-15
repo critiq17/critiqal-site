@@ -74,7 +74,7 @@
   </div>
 </article>
 
-<style>
+<style lang="css">
   .post-card {
     max-width: 42rem;
     margin: 0 auto;

@@ -49,7 +49,7 @@
   {/each}
 </div>
 
-<style>
+<style lang="css">
   .toast-container {
     position: fixed;
     bottom: 1.5rem;

@@ -16,6 +16,8 @@
     image_url?: string | null
   }
 
+  const base = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
   let profile = $state<User | null>(null)
   let posts = $state<Post[]>([])
   let loading = $state(true)
@@ -32,9 +34,8 @@
       // Fetch user profile
       profile = await usersService.getUser(username)
       
-      // TODO: Fetch user posts from API
-      // For now using mock data
-      posts = []
+      const postsRes = await fetch(`${base}/posts/users/${username}`);
+      const posts = postsRes.ok ? await postsRes.json() : [];
     } catch (err) {
       console.error('Failed to load profile:', err)
     } finally {

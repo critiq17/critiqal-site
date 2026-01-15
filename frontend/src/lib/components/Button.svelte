@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
   export type ButtonSize = 'sm' | 'md' | 'lg'
 </script>

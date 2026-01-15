@@ -52,6 +52,7 @@
 </script>
 
 <section class="composer-container">
+
   <div class="composer-card">
     <div class="composer-header">
       <div class="avatar">
@@ -113,7 +114,7 @@
   </div>
 </section>
 
-<style>
+<style lang="css">
   .composer-container {
     margin: 0 auto;
     padding: 0 1rem;
@@ -147,7 +148,7 @@
     background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
     display: flex;
     align-items: center;
-    justify-center;
+    justify-content: center;
     color: white;
     font-weight: 700;
     font-size: 0.875rem;

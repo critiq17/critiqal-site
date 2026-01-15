@@ -20,7 +20,9 @@
     theme.setMode($theme.mode === 'dark' ? 'light' : 'dark')
   }
 
-  async function updatePassword() {
+  async function updatePassword(e: Event) {
+    e.preventDefault()
+    
     if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
       passwordError = 'Please fill in all fields'
       return
@@ -184,9 +186,9 @@
               <div class="error-message">
                 {passwordError}
               </div>
-            {/if}
+            {/if} 
 
-            <form class="password-form" on:submit|preventDefault={updatePassword}>
+            <form class="password-form" onsubmit={updatePassword}>
               <div class="form-group">
                 <label for="current" class="form-label">Current Password</label>
                 <input

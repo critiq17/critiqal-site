@@ -2,8 +2,7 @@
   import { createEventDispatcher } from 'svelte'
   const dispatch = createEventDispatcher()
   
-  export let show: boolean = false
-  export let onClose: () => void = () => {}
+  let { show = false, onClose = () => {} } = $props()
 
   let query = $state('')
   let results = $state<Array<{ username: string; bio?: string; postCount?: number }>>([])
@@ -59,10 +58,10 @@
     role="dialog"
     aria-modal="true"
     aria-label="Search users"
+    tabindex="-1"
   >
     <div 
       class="search-dialog"
-      onclick={(e) => e.stopPropagation()}
       role="document"
     >
       <!-- Search Header -->
@@ -77,7 +76,6 @@
           placeholder="Search users..."
           class="search-input"
           bind:value={query}
-          autofocus
         />
         
         <button 
@@ -148,7 +146,7 @@
   </div>
 {/if}
 
-<style>
+<style lang="css">
   .search-overlay {
     position: fixed;
     inset: 0;

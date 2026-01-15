@@ -188,7 +188,7 @@
   <SearchOverlay show={searchOpen} onClose={() => (searchOpen = false)} />
 </nav>
 
-<style>
+<style lang="css">
   :global(.animate-fadeIn) {
     animation: fadeIn 0.15s ease-out;
   }

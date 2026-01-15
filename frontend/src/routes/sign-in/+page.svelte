@@ -16,7 +16,9 @@
     }
   })
 
-  async function handleSignIn() {
+  async function handleSignIn(e: Event) {
+    e.preventDefault()
+    
     if (!username || !password) {
       error = 'Please fill in all fields'
       return
@@ -54,7 +56,7 @@
       <p class="auth-subtitle">Sign in to continue to Critiqal</p>
     </div>
 
-    <form class="auth-form" on:submit|preventDefault={handleSignIn}>
+    <form class="auth-form" onsubmit={handleSignIn}>
       <div class="form-group">
         <label for="username" class="form-label">Username</label>
         <input

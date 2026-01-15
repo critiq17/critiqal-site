@@ -67,7 +67,7 @@
   </svg>
 </div>
 
-<style>
+<style lang="css">
   .background-container {
     position: fixed;
     inset: 0;
