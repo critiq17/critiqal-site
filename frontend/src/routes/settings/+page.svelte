@@ -1,24 +1,27 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { goto } from '$app/navigation'
-  import { user as authUser, signOut } from '$lib/stores/auth'
+  import { user as authUser } from '$lib/stores/auth'
+  import { theme } from '$lib/stores/theme'
+  import { signOut } from '$lib/services/auth'
+  import Background from '$lib/components/Background.svelte'
 
-  let theme = 'dark'
-  let activeSection: 'themes' | 'password' | 'contributing' = 'themes'
-  let passwordForm = {
+  let activeSection = $state<'appearance' | 'account' | 'about'>('appearance')
+  let passwordForm = $state({
     current: '',
     new: '',
     confirm: ''
-  }
-  let passwordError = ''
-  let passwordSuccess = false
+  })
+  let passwordError = $state('')
+  let passwordSuccess = $state(false)
+  let isSigningOut = $state(false)
 
   function toggleTheme() {
-    theme = theme === 'dark' ? 'light' : 'dark'
+    theme.setMode($theme.mode === 'dark' ? 'light' : 'dark')
   }
 
   async function updatePassword() {
-    if (!passwordForm.new || !passwordForm.confirm) {
+    if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
       passwordError = 'Please fill in all fields'
       return
     }
@@ -31,10 +34,22 @@
       return
     }
     
-    // Update password (would call API in real app)
+    // TODO: API call to update password
     passwordSuccess = true
+    passwordError = ''
     passwordForm = { current: '', new: '', confirm: '' }
     setTimeout(() => passwordSuccess = false, 3000)
+  }
+
+  async function handleSignOut() {
+    isSigningOut = true
+    try {
+      await signOut()
+      goto('/sign-in')
+    } catch (err) {
+      console.error('Sign out failed:', err)
+      isSigningOut = false
+    }
   }
 
   onMount(() => {
@@ -48,203 +63,214 @@
   <title>Settings - Critiqal</title>
 </svelte:head>
 
-<main class="max-w-7xl mx-auto px-4 pt-24 pb-20">
-  <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-    <!-- Left Sidebar -->
-    <aside class="lg:col-span-1">
-      <div class="space-y-2">
+<Background />
+
+<main class="settings-page">
+  <div class="settings-container">
+    <!-- Sidebar -->
+    <aside class="settings-sidebar">
+      <h2 class="sidebar-title">Settings</h2>
+      
+      <nav class="sidebar-nav">
         <button
-          onclick={() => activeSection = 'themes'}
-          class="w-full text-left px-6 py-4 rounded-2xl transition-all duration-200 {activeSection === 'themes' ? 'bg-white/10 border-l-4 border-cyan-500 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}"
+          onclick={() => activeSection = 'appearance'}
+          class="nav-item {activeSection === 'appearance' ? 'active' : ''}"
         >
-          <p class="font-semibold text-lg">Themes</p>
-          <p class="text-sm text-white/50">Appearance settings</p>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+          Appearance
         </button>
 
         <button
-          onclick={() => activeSection = 'password'}
-          class="w-full text-left px-6 py-4 rounded-2xl transition-all duration-200 {activeSection === 'password' ? 'bg-white/10 border-l-4 border-cyan-500 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}"
+          onclick={() => activeSection = 'account'}
+          class="nav-item {activeSection === 'account' ? 'active' : ''}"
         >
-          <p class="font-semibold text-lg">Security</p>
-          <p class="text-sm text-white/50">Change password</p>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Account
         </button>
 
         <button
-          onclick={() => activeSection = 'contributing'}
-          class="w-full text-left px-6 py-4 rounded-2xl transition-all duration-200 {activeSection === 'contributing' ? 'bg-white/10 border-l-4 border-cyan-500 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}"
+          onclick={() => activeSection = 'about'}
+          class="nav-item {activeSection === 'about' ? 'active' : ''}"
         >
-          <p class="font-semibold text-lg">Contributing</p>
-          <p class="text-sm text-white/50">Contribute to Critiqal</p>
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          About
         </button>
 
-        <hr class="border-white/10 my-6" />
+        <div class="nav-divider"></div>
 
         <button
-          onclick={() => { signOut(); goto('/sign-in'); }}
-          class="w-full text-left px-6 py-4 rounded-2xl text-red-400 hover:bg-red-400/10 transition-all duration-200 font-semibold"
+          onclick={handleSignOut}
+          disabled={isSigningOut}
+          class="nav-item danger"
         >
-          Sign Out
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          {isSigningOut ? 'Signing out...' : 'Sign Out'}
         </button>
-      </div>
+      </nav>
     </aside>
 
-    <!-- Right Content Area -->
-    <div class="lg:col-span-4">
-      {#if activeSection === 'themes'}
-        <div class="animate-slideDown">
-          <h2 class="text-4xl font-extrabold text-white mb-2">Themes</h2>
-          <p class="text-white/60 text-lg mb-12">Choose your preferred appearance</p>
+    <!-- Content -->
+    <div class="settings-content">
+      {#if activeSection === 'appearance'}
+        <div class="content-section">
+          <h1 class="section-title">Appearance</h1>
+          <p class="section-description">Customize how Critiqal looks</p>
 
-          <div class="space-y-8">
-            <!-- Theme Toggle -->
-            <div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-2xl font-extrabold text-white mb-2">Dark Mode</h3>
-                  <p class="text-white/60 text-lg">Current theme: <span class="text-white font-semibold">{theme === 'dark' ? 'Dark' : 'Light'}</span></p>
-                </div>
-                <button 
-                  onclick={toggleTheme}
-                  class="h-14 px-8 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-semibold text-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                >
-                  {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-                </button>
+          <div class="settings-card">
+            <div class="setting-row">
+              <div class="setting-info">
+                <h3 class="setting-title">Theme</h3>
+                <p class="setting-description">
+                  Choose your preferred color scheme
+                </p>
               </div>
-            </div>
-
-            <!-- Theme Previews -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <!-- Dark Theme Preview -->
-              <div class="bg-black border-2 {theme === 'dark' ? 'border-cyan-500' : 'border-white/10'} rounded-2xl p-8 transition-all duration-200 cursor-pointer hover:border-cyan-500/50 overflow-hidden">
-                <div class="bg-gradient-to-b from-blue-950 to-black rounded-lg p-4 space-y-3">
-                  <div class="h-2 bg-white/20 rounded w-3/4"></div>
-                  <div class="h-2 bg-white/10 rounded w-1/2"></div>
-                  <div class="space-y-2 mt-4">
-                    <div class="h-2 bg-white/20 rounded"></div>
-                    <div class="h-2 bg-white/20 rounded"></div>
-                    <div class="h-2 bg-white/10 rounded w-3/4"></div>
-                  </div>
-                </div>
-                <p class="text-white font-semibold mt-4 text-center">Dark Theme</p>
-              </div>
-
-              <!-- Light Theme Preview -->
-              <div class="bg-white border-2 {theme === 'light' ? 'border-cyan-500' : 'border-white/20'} rounded-2xl p-8 transition-all duration-200 cursor-pointer hover:border-cyan-500/50 overflow-hidden">
-                <div class="bg-gradient-to-b from-blue-50 to-white rounded-lg p-4 space-y-3">
-                  <div class="h-2 bg-gray-300 rounded w-3/4"></div>
-                  <div class="h-2 bg-gray-200 rounded w-1/2"></div>
-                  <div class="space-y-2 mt-4">
-                    <div class="h-2 bg-gray-300 rounded"></div>
-                    <div class="h-2 bg-gray-300 rounded"></div>
-                    <div class="h-2 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                </div>
-                <p class="text-gray-800 font-semibold mt-4 text-center">Light Theme</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      {:else if activeSection === 'password'}
-        <div class="animate-slideDown">
-          <h2 class="text-4xl font-extrabold text-white mb-2">Change Password</h2>
-          <p class="text-white/60 text-lg mb-12">Keep your account secure</p>
-
-          <div class="max-w-2xl">
-            <div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 space-y-6">
-              {#if passwordSuccess}
-                <div class="bg-green-500/20 border border-green-500/50 rounded-2xl p-4">
-                  <p class="text-green-400 font-semibold">✓ Password updated successfully</p>
-                </div>
-              {/if}
-
-              {#if passwordError}
-                <div class="bg-red-500/20 border border-red-500/50 rounded-2xl p-4">
-                  <p class="text-red-400 font-semibold">{passwordError}</p>
-                </div>
-              {/if}
-
-              <!-- Current Password -->
-              <div>
-                <label class="block text-lg font-semibold text-white mb-3">Current Password</label>
-                <input 
-                  type="password" 
-                  bind:value={passwordForm.current}
-                  placeholder="Enter current password"
-                  class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/40 text-lg font-medium focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all duration-200"
-                />
-              </div>
-
-              <!-- New Password -->
-              <div>
-                <label class="block text-lg font-semibold text-white mb-3">New Password</label>
-                <input 
-                  type="password" 
-                  bind:value={passwordForm.new}
-                  placeholder="Enter new password (8+ characters)"
-                  class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/40 text-lg font-medium focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all duration-200"
-                />
-              </div>
-
-              <!-- Confirm Password -->
-              <div>
-                <label class="block text-lg font-semibold text-white mb-3">Confirm Password</label>
-                <input 
-                  type="password" 
-                  bind:value={passwordForm.confirm}
-                  placeholder="Confirm new password"
-                  class="w-full px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder-white/40 text-lg font-medium focus:outline-none focus:border-cyan-500/50 focus:bg-white/10 transition-all duration-200"
-                />
-              </div>
-
-              <!-- Update Button -->
-              <button 
-                onclick={updatePassword}
-                class="w-full py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-semibold text-lg transition-all duration-200 hover:scale-105 active:scale-95 mt-4"
-              >
-                Update Password
+              <button onclick={toggleTheme} class="theme-toggle">
+                {#if $theme.mode === 'dark'}
+                  <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
+                  </svg>
+                  <span>Dark</span>
+                {:else}
+                  <svg class="toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                  </svg>
+                  <span>Light</span>
+                {/if}
               </button>
             </div>
           </div>
+
+          <div class="theme-preview">
+            <div class="preview-card">
+              <div class="preview-header">
+                <div class="preview-avatar"></div>
+                <div class="preview-lines">
+                  <div class="preview-line short"></div>
+                  <div class="preview-line"></div>
+                </div>
+              </div>
+              <div class="preview-body">
+                <div class="preview-line"></div>
+                <div class="preview-line"></div>
+                <div class="preview-line short"></div>
+              </div>
+            </div>
+          </div>
         </div>
-      {:else if activeSection === 'contributing'}
-        <div class="animate-slideDown">
-          <h2 class="text-4xl font-extrabold text-white mb-2">Contributing</h2>
-          <p class="text-white/60 text-lg mb-12">Help improve Critiqal</p>
+      {:else if activeSection === 'account'}
+        <div class="content-section">
+          <h1 class="section-title">Account Settings</h1>
+          <p class="section-description">Manage your password and security</p>
 
-          <div class="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 max-w-3xl">
-            <div class="prose prose-invert max-w-none">
-              <h3 class="text-2xl font-extrabold text-white">Contributing to Critiqal</h3>
-              <p class="text-white/80 text-lg leading-relaxed mt-4">
-                We love contributions from the community! Whether you're reporting bugs, requesting features, or submitting pull requests, 
-                your help makes Critiqal better for everyone.
+          <div class="settings-card">
+            <h3 class="card-title">Change Password</h3>
+
+            {#if passwordSuccess}
+              <div class="success-message">
+                Password updated successfully
+              </div>
+            {/if}
+
+            {#if passwordError}
+              <div class="error-message">
+                {passwordError}
+              </div>
+            {/if}
+
+            <form class="password-form" on:submit|preventDefault={updatePassword}>
+              <div class="form-group">
+                <label for="current" class="form-label">Current Password</label>
+                <input
+                  type="password"
+                  id="current"
+                  bind:value={passwordForm.current}
+                  placeholder="Enter current password"
+                  class="form-input"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="new" class="form-label">New Password</label>
+                <input
+                  type="password"
+                  id="new"
+                  bind:value={passwordForm.new}
+                  placeholder="At least 8 characters"
+                  class="form-input"
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="confirm" class="form-label">Confirm Password</label>
+                <input
+                  type="password"
+                  id="confirm"
+                  bind:value={passwordForm.confirm}
+                  placeholder="Confirm new password"
+                  class="form-input"
+                />
+              </div>
+
+              <button type="submit" class="btn-submit">
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+      {:else if activeSection === 'about'}
+        <div class="content-section">
+          <h1 class="section-title">About Critiqal</h1>
+          <p class="section-description">Open-source social network</p>
+
+          <div class="settings-card">
+            <h3 class="card-title">Project Information</h3>
+            
+            <div class="about-content">
+              <p>
+                Critiqal is an open-source, privacy-focused social network built with modern web technologies.
               </p>
-
-              <h4 class="text-xl font-extrabold text-white mt-8 mb-4">Getting Started</h4>
-              <ul class="text-white/80 text-lg space-y-3">
-                <li>Fork the repository on GitHub</li>
-                <li>Clone your fork locally</li>
-                <li>Create a feature branch for your changes</li>
-                <li>Follow our code style guidelines</li>
-                <li>Submit a pull request with a clear description</li>
-              </ul>
-
-              <h4 class="text-xl font-extrabold text-white mt-8 mb-4">Code of Conduct</h4>
-              <p class="text-white/80 text-lg leading-relaxed">
-                We are committed to providing a welcoming and inspiring community for all. 
-                Please read and follow our Code of Conduct to help us maintain a positive environment.
-              </p>
-
-              <h4 class="text-xl font-extrabold text-white mt-8 mb-4">Questions?</h4>
-              <p class="text-white/80 text-lg leading-relaxed">
-                Feel free to reach out on GitHub or open an issue if you have any questions about contributing.
-              </p>
+              
+              <div class="about-features">
+                <div class="feature-item">
+                  <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>Privacy-first design</span>
+                </div>
+                
+                <div class="feature-item">
+                  <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  <span>100% open source</span>
+                </div>
+                
+                <div class="feature-item">
+                  <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                  </svg>
+                  <span>No moderation</span>
+                </div>
+              </div>
 
               <a 
-                href="https://github.com" 
+                href="https://github.com/critiq17/critiqal-site" 
                 target="_blank" 
                 rel="noreferrer"
-                class="inline-block mt-8 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:shadow-lg hover:shadow-cyan-500/50 text-white font-semibold text-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                class="github-link"
               >
+                <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
                 View on GitHub
               </a>
             </div>
@@ -256,18 +282,407 @@
 </main>
 
 <style>
-  :global(.animate-slideDown) {
-    animation: slideDown 0.3s ease-out forwards;
+  .settings-page {
+    min-height: 100vh;
+    padding: 7rem 1rem 3rem;
   }
 
-  @keyframes slideDown {
+  .settings-container {
+    max-width: 72rem;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 16rem 1fr;
+    gap: 2.5rem;
+  }
+
+  /* Sidebar */
+  .settings-sidebar {
+    position: sticky;
+    top: 7rem;
+    height: fit-content;
+  }
+
+  .sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 1.5rem;
+    color: var(--fg);
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+  }
+
+  .nav-item:hover {
+    color: var(--fg);
+    background: var(--bg-2);
+  }
+
+  .nav-item.active {
+    color: var(--fg);
+    background: var(--card);
+    border: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  .nav-item.danger {
+    color: var(--danger);
+  }
+
+  .nav-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .nav-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .nav-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .nav-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.5rem 0;
+  }
+
+  /* Content */
+  .settings-content {
+    min-width: 0;
+  }
+
+  .content-section {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .section-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    color: var(--fg);
+  }
+
+  .section-description {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0 0 2rem;
+  }
+
+  .settings-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: var(--fg);
+  }
+
+  /* Theme Settings */
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .setting-info {
+    flex: 1;
+  }
+
+  .setting-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--fg);
+  }
+
+  .setting-description {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1);
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .theme-toggle:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .toggle-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .theme-preview {
+    margin-top: 2rem;
+  }
+
+  .preview-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.5rem;
+  }
+
+  .preview-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .preview-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0EA5E9, #8B5CF6);
+    flex-shrink: 0;
+  }
+
+  .preview-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .preview-line {
+    height: 0.5rem;
+    background: var(--muted);
+    border-radius: 0.25rem;
+    opacity: 0.2;
+  }
+
+  .preview-line.short {
+    width: 60%;
+  }
+
+  .preview-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Password Form */
+  .password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--fg);
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--fg);
+    font-size: 0.9375rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .form-input::placeholder {
+    color: var(--muted);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .btn-submit {
+    width: fit-content;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #0EA5E9, #6366F1);
+    color: white;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-submit:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .success-message {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #22C55E;
+    font-size: 0.875rem;
+  }
+
+  .error-message {
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #EF4444;
+    font-size: 0.875rem;
+  }
+
+  /* About Section */
+  .about-content {
+    color: var(--fg);
+    line-height: 1.6;
+  }
+
+  .about-content p {
+    margin: 0 0 1.5rem;
+  }
+
+  .about-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--muted);
+  }
+
+  .feature-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #0EA5E9;
+  }
+
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .github-link:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
+  }
+
+  .github-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  @keyframes fadeIn {
     from {
       opacity: 0;
-      transform: translateY(-20px);
     }
     to {
       opacity: 1;
-      transform: translateY(0);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .settings-container {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .settings-sidebar {
+      position: static;
+    }
+
+    .sidebar-nav {
+      flex-direction: row;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+
+    .nav-item {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .settings-page {
+      padding: 6rem 1rem 2rem;
+    }
+
+    .settings-card {
+      padding: 1.5rem;
+    }
+
+    .setting-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .theme-toggle {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>
