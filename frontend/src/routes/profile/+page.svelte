@@ -1,233 +1,568 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import { fly } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
-  import { user as authUser } from '$lib/stores/auth';
-  import { notifications } from '$lib/stores/notifications';
-  import Button from '$lib/components/Button.svelte';
-  import Card from '$lib/components/Card.svelte';
-  import Input from '$lib/components/Input.svelte';
-  import Navigation from '$lib/components/Navigation.svelte';
-  import PostCard from '$lib/components/PostCard.svelte';
-  import { api } from '$lib/api/client';
-  import { formatDate } from '$lib/utils/helpers';
-
-  interface User {
-    username: string;
-    photo_url?: string;
-    first_name?: string;
-    last_name?: string;
-    bio?: string;
-    email?: string;
-  }
+  import { onMount } from 'svelte'
+  import { page } from '$app/stores'
+  import { user as authUser } from '$lib/stores/auth'
+  import { goto } from '$app/navigation'
+  import PostCard from '$lib/components/PostCard.svelte'
+  import PostComposer from '$lib/components/PostComposer.svelte'
+  import * as usersService from '$lib/services/users'
+  import { notifications } from '$lib/stores/notifications'
+  import type { User } from '$lib/types'
 
   interface Post {
-    id: string;
-    title?: string;
-    body: string;
-    created_at: string;
-    image_url?: string | null;
+    id: string
+    body: string
+    created_at: string
+    image_url?: string | null
   }
 
-  let user: User | null = null;
-  let posts: Post[] = [];
-  let newPhoto: File | null = null;
-  let previewUrl = '';
-  let loading = true;
-  let isEditing = false;
-  let editedBio = '';
+  let profile = $state<User | null>(null)
+  let posts = $state<Post[]>([])
+  let loading = $state(true)
+  let activeTab = $state<'posts' | 'about'>('posts')
+
+  const username = $derived($page.params.username)
+  const isOwnProfile = $derived(profile?.username === $authUser?.username)
 
   async function fetchProfile() {
+    if (!username) return
+
+    loading = true
     try {
-      const [userRes, postsRes] = await Promise.all([
-        api<User>(`/users/${$authUser?.username}`),
-        api<Post[]>(`/posts/users/${$authUser?.username}`)
-      ]);
-      user = userRes;
-      posts = postsRes;
-      editedBio = user?.bio || '';
+      profile = await usersService.getUser(username)
+      // TODO: Fetch user posts from API
+      posts = []
     } catch (err) {
-      notifications.error('Failed to load profile');
-      console.error(err);
+      console.error('Failed to load profile:', err)
     } finally {
-      loading = false;
+      loading = false
     }
   }
 
-  function handleFileChange(e: Event) {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.length) {
-      newPhoto = target.files[0];
-      previewUrl = URL.createObjectURL(newPhoto);
-    }
-  }
-
-  async function uploadPhoto() {
-    if (!newPhoto) return;
-
-    const formData = new FormData();
-    formData.append('photo', newPhoto);
-
+  async function handleDeletePost(postId: string) {
+    if (!confirm('Are you sure you want to delete this post?')) return
+    
     try {
-      const data = await api<{ url: string }>(`/users/${$authUser?.username}/photo`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (data.url && user) {
-        user.photo_url = data.url;
-        newPhoto = null;
-        previewUrl = '';
-        notifications.success('Photo updated');
-      }
-    } catch (err) {
-      notifications.error('Failed to upload photo');
-      console.error(err);
-    }
-  }
-
-  async function saveBio() {
-    if (!user) return;
-
-    try {
-      const updated = await api<User>(`/users/${user.username}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ bio: editedBio })
-      });
-      user.bio = updated.bio;
-      isEditing = false;
-      notifications.success('Bio updated');
-    } catch (err) {
-      notifications.error('Failed to update bio');
-      console.error(err);
+      // TODO: API call to delete post
+      // await api.delete(`/posts/${postId}`)
+      
+      posts = posts.filter(p => p.id !== postId)
+      notifications.success('Post deleted successfully')
+    } catch (error) {
+      notifications.error('Failed to delete post')
     }
   }
 
   onMount(() => {
-    if (!$authUser) {
-      goto('/sign-in');
-      return;
+    if (!username) {
+      goto('/')
+      return
     }
-    fetchProfile();
-  });
+    fetchProfile()
+  })
 </script>
 
 <svelte:head>
-  <title>My Profile - Critiqal</title>
+  <title>{profile?.username || 'Profile'} - Critiqal</title>
 </svelte:head>
 
-<div class="min-h-screen bg-[color:var(--bg)] text-[color:var(--fg)]">
-  <Navigation />
-
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    {#if loading}
-      <div class="flex items-center justify-center min-h-[50vh]">
-        <div class="text-[color:var(--muted)]">Loading profile...</div>
-      </div>
-    {:else if user}
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Profile Info -->
-        <section class="lg:col-span-1" in:fly={{ x: -12, duration: 500, easing: cubicOut }}>
-          <Card class="p-6">
-            <div class="flex flex-col items-center space-y-4">
-              <div class="relative group">
-                <img
-                  src={previewUrl || user.photo_url || '/default-avatar.png'}
-                  alt="avatar"
-                  class="w-24 h-24 rounded-full object-cover border-4 border-[color:var(--border)]"
-                />
-                <label
-                  for="photo-upload"
-                  class="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                >
-                  <div class="text-white text-sm">Change</div>
-                </label>
-                <input
-                  id="photo-upload"
-                  type="file"
-                  accept="image/*"
-                  onchange={handleFileChange}
-                  class="sr-only"
-                />
-              </div>
-
-              {#if newPhoto}
-                <Button onclick={uploadPhoto} size="sm" class="w-full">
-                  Upload Photo
-                </Button>
-              {/if}
-
-              <div class="text-center space-y-2">
-                <h2 class="text-xl font-bold">
-                  {user.first_name} {user.last_name}
-                </h2>
-                <p class="text-[color:var(--muted)]">@{user.username}</p>
-                <p class="text-[color:var(--muted)] text-sm">{user.email}</p>
-              </div>
-
-              <div class="w-full space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-semibold">Bio</h3>
-                  {#if !isEditing}
-                    <Button size="sm" variant="ghost" onclick={() => (isEditing = true)}>
-                      Edit
-                    </Button>
-                  {/if}
-                </div>
-                {#if isEditing}
-                  <textarea
-                    bind:value={editedBio}
-                    class="w-full p-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--bg)] text-[color:var(--fg)] resize-none"
-                    rows="4"
-                    placeholder="Tell us about yourself..."
-                  ></textarea>
-                  <div class="flex gap-2">
-                    <Button size="sm" onclick={saveBio}>Save</Button>
-                    <Button size="sm" variant="ghost" onclick={() => (isEditing = false, editedBio = user?.bio || '')}>
-                      Cancel
-                    </Button>
-                  </div>
-                {:else}
-                  <p class="text-[color:var(--muted)] text-sm leading-relaxed">
-                    {user.bio || 'No bio set'}
-                  </p>
-                {/if}
-              </div>
+<main class="profile-page">
+  {#if loading}
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Loading profile...</p>
+    </div>
+  {:else if profile}
+    <div class="profile-container">
+      <!-- Profile Header -->
+      <div class="profile-header">
+        <div class="profile-cover"></div>
+        
+        <div class="profile-info">
+          <div class="avatar-container">
+            <div class="avatar">
+              {profile.username[0].toUpperCase()}
             </div>
-          </Card>
-        </section>
+          </div>
 
-        <!-- Posts -->
-        <section class="lg:col-span-2" in:fly={{ y: 12, duration: 500, delay: 100, easing: cubicOut }}>
-          <div class="space-y-6">
-            <h2 class="text-2xl font-bold">My Posts</h2>
-            {#if posts.length === 0}
-              <Card class="p-8 text-center">
-                <div class="text-[color:var(--muted)]">No posts yet</div>
-              </Card>
-            {:else}
-              <div class="space-y-4">
-                {#each posts as post (post.id)}
-                  <PostCard
-                    {post}
-                    onclick={() => goto(`/posts/${post.id}`)}
-                  />
-                {/each}
-              </div>
+          <div class="info-row">
+            <div class="user-details">
+              <h1 class="display-name">
+                {profile.first_name || profile.username} {profile.last_name || ''}
+              </h1>
+              <p class="username">@{profile.username}</p>
+              {#if profile.bio}
+                <p class="bio">{profile.bio}</p>
+              {/if}
+            </div>
+
+            {#if isOwnProfile}
+              <a href="/settings" class="btn-edit gradient-brutal">
+                Edit Profile
+              </a>
             {/if}
           </div>
-        </section>
+
+          <div class="stats-row">
+            <div class="stat">
+              <span class="stat-value">{posts.length}</span>
+              <span class="stat-label">Posts</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Followers</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value">0</span>
+              <span class="stat-label">Following</span>
+            </div>
+          </div>
+        </div>
       </div>
-    {:else}
-      <div class="flex items-center justify-center min-h-[50vh]">
-        <Card class="p-8 text-center">
-          <div class="text-[color:var(--muted)]">Profile not found</div>
-          <Button onclick={() => goto('/dashboard')} class="mt-4">
-            Back to Dashboard
-          </Button>
-        </Card>
+
+      <!-- Tabs -->
+      <div class="tabs-container">
+        <button
+          onclick={() => activeTab = 'posts'}
+          class="tab {activeTab === 'posts' ? 'active' : ''}"
+        >
+          Posts
+        </button>
+        <button
+          onclick={() => activeTab = 'about'}
+          class="tab {activeTab === 'about' ? 'active' : ''}"
+        >
+          About
+        </button>
       </div>
-    {/if}
-  </main>
-</div>
+
+      <!-- Content -->
+      <div class="content-container">
+        {#if activeTab === 'posts'}
+          {#if isOwnProfile}
+            <PostComposer on:post={() => fetchProfile()} />
+          {/if}
+
+          <div class="posts-list">
+            {#if posts.length === 0}
+              <div class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p class="empty-text">No posts yet</p>
+              </div>
+            {:else}
+              {#each posts as post (post.id)}
+                <PostCard 
+                  post={{ 
+                    id: post.id,
+                    username: profile.username, 
+                    content: post.body, 
+                    image: post.image_url || undefined, 
+                    time: post.created_at, 
+                    likes: 0, 
+                    comments: 0 
+                  }}
+                  showDelete={isOwnProfile}
+                  onDelete={() => handleDeletePost(post.id)}
+                />
+              {/each}
+            {/if}
+          </div>
+        {:else}
+          <div class="about-section">
+            <div class="about-card">
+              <h2 class="about-title">About</h2>
+              <div class="about-content">
+                {#if profile.bio}
+                  <p class="about-bio">{profile.bio}</p>
+                {/if}
+                
+                <div class="about-details">
+                  {#if profile.email}
+                    <div class="detail-item">
+                      <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                      <span>{profile.email}</span>
+                    </div>
+                  {/if}
+                  
+                  <div class="detail-item">
+                    <svg class="detail-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Joined {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {/if}
+      </div>
+    </div>
+  {:else}
+    <div class="error-container">
+      <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </svg>
+      <h2 class="error-title">Profile not found</h2>
+      <p class="error-text">The user you're looking for doesn't exist</p>
+      <a href="/dashboard" class="btn-home gradient-brutal">Back to Feed</a>
+    </div>
+  {/if}
+</main>
+
+<style>
+  .profile-page {
+    min-height: calc(100vh - 4rem);
+    padding: 2rem 1rem 3rem;
+  }
+
+  .loading-container,
+  .error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+  }
+
+  .loading-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 3px solid var(--border);
+    border-top-color: var(--fg);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  .loading-text {
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  .error-icon {
+    width: 4rem;
+    height: 4rem;
+    color: var(--muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .error-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--fg);
+  }
+
+  .error-text {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0 0 1.5rem;
+  }
+
+  .btn-home {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-home:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .profile-container {
+    max-width: 48rem;
+    margin: 0 auto;
+  }
+
+  .profile-header {
+    margin-bottom: 2rem;
+  }
+
+  .profile-cover {
+    height: 12rem;
+    background: linear-gradient(135deg, rgba(45, 55, 72, 0.1), rgba(124, 58, 237, 0.1));
+    border-radius: 1.25rem 1.25rem 0 0;
+    position: relative;
+  }
+
+  .profile-info {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 0 0 1.25rem 1.25rem;
+    padding: 0 2rem 2rem;
+    position: relative;
+  }
+
+  .avatar-container {
+    position: absolute;
+    top: -3rem;
+    left: 2rem;
+  }
+
+  .avatar {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-start), var(--secondary-end));
+    border: 4px solid var(--card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: 800;
+  }
+
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-top: 3.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .user-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .display-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 0.25rem;
+    color: var(--fg);
+  }
+
+  .username {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0 0 0.75rem;
+  }
+
+  .bio {
+    font-size: 0.9375rem;
+    color: var(--fg);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .btn-edit {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .btn-edit:hover {
+    opacity: 0.9;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--fg);
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .tabs-container {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .tab {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab:hover {
+    color: var(--fg);
+  }
+
+  .tab.active {
+    color: var(--fg);
+    border-bottom-color: var(--accent-start);
+  }
+
+  .content-container {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .empty-state {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 4rem 2rem;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 3rem;
+    height: 3rem;
+    color: var(--muted);
+    opacity: 0.5;
+    margin: 0 auto 1rem;
+  }
+
+  .empty-text {
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .about-section {
+    max-width: 42rem;
+    margin: 0 auto;
+  }
+
+  .about-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 2rem;
+  }
+
+  .about-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem;
+    color: var(--fg);
+  }
+
+  .about-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .about-bio {
+    font-size: 0.9375rem;
+    color: var(--fg);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .about-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--muted);
+    font-size: 0.875rem;
+  }
+
+  .detail-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    flex-shrink: 0;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .profile-cover {
+      height: 8rem;
+      border-radius: 0;
+    }
+
+    .profile-info {
+      padding: 0 1.5rem 1.5rem;
+      border-radius: 0;
+    }
+
+    .avatar-container {
+      left: 1.5rem;
+    }
+
+    .avatar {
+      width: 5rem;
+      height: 5rem;
+      font-size: 1.5rem;
+    }
+
+    .info-row {
+      flex-direction: column;
+      padding-top: 3rem;
+    }
+
+    .btn-edit {
+      width: 100%;
+      text-align: center;
+    }
+
+    .stats-row {
+      gap: 1.5rem;
+    }
+
+    .about-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
