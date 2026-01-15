@@ -117,5 +117,5 @@
     </div>
   </div>
 
-  <SearchOverlay open={searchOpen} onClose={() => (searchOpen = false)} />
+  <SearchOverlay show={searchOpen} onClose={() => (searchOpen = false)} />
 </nav>

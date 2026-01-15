@@ -234,7 +234,7 @@
           </Card>
         {:else}
           {#each $posts.posts as post (post.id)}
-            <PostCard {post} editable={isOwnProfile} />
+            <PostCard post={{ username: post.author?.username || 'Unknown', content: post.body, image: post.image_url || undefined, time: post.created_at, likes: 0, comments: 0 }} />
           {/each}
         {/if}
       </div>

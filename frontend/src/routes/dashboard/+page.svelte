@@ -1,60 +1,25 @@
 <script lang="ts">
-  /**
-   * Dashboard Page
-   * Main feed for authenticated users
-   */
-
   import { onMount } from 'svelte'
   import { browser } from '$app/environment'
   import { isAuthenticated, user } from '$lib/stores/auth'
-  import { posts, postsLoading, postsList } from '$lib/stores'
+  import { posts, postsList } from '$lib/stores'
   import { goto } from '$app/navigation'
   import PostCard from '$lib/components/PostCard.svelte'
   import PostComposer from '$lib/components/PostComposer.svelte'
-  import SearchOverlay from '$lib/components/SearchOverlay.svelte'
-  import Button from '$lib/components/Button.svelte'
-  import Skeleton from '$lib/components/Skeleton.svelte'
 
-  // Redirect if not authenticated
   $effect.pre(() => {
     if (browser && !$isAuthenticated) {
       goto('/sign-in').catch(console.error)
     }
   })
 
-  let searchOpen = $state(false)
-
-  let sentinel: HTMLDivElement | null = $state(null)
-  let observer: IntersectionObserver | null = $state(null)
-
-  async function loadMore() {
-    if ($postsLoading) return
-    // The store automatically manages pagination
-    await posts.fetchRecentPosts(100)
-  }
-
   async function refreshFeed() {
     posts.clearPosts()
     await posts.fetchRecentPosts(50)
   }
 
-  // Load initial posts
   onMount(() => {
     refreshFeed()
-
-    if (!browser) return
-
-    observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          loadMore().catch(console.error)
-        }
-      },
-      { rootMargin: '600px 0px' }
-    )
-
-    if (sentinel) observer.observe(sentinel)
-    return () => observer?.disconnect()
   })
 </script>
 
@@ -62,61 +27,31 @@
   <title>Feed - Critiqal</title>
 </svelte:head>
 
-<div class="mx-auto max-w-2xl space-y-4">
-  <div class="flex items-center justify-between gap-3">
-    <div class="min-w-0">
-      <h1 class="truncate text-lg font-semibold text-[color:var(--fg)]">Feed</h1>
-      <p class="text-sm text-[color:var(--muted)]">Welcome, {$user?.username}</p>
-    </div>
-    <Button variant="secondary" size="sm" onclick={() => (searchOpen = true)}>
-      🔍 Search
-    </Button>
+<main class="max-w-3xl mx-auto px-4 pt-24 pb-20">
+  <!-- Page Header -->
+  <div class="mb-12">
+    <h1 class="text-5xl font-extrabold text-white mb-3">Welcome back, {$user?.username}</h1>
+    <p class="text-white/60 text-xl">Share your thoughts with the community</p>
   </div>
 
-  <PostComposer onCreated={() => refreshFeed()} />
+  <!-- Post Composer -->
+  <PostComposer on:post={() => refreshFeed()} />
 
-  <SearchOverlay open={searchOpen} onClose={() => (searchOpen = false)} />
-
-  {#if $postsLoading && $postsList.length === 0}
-    <!-- Loading Skeletons -->
-    {#each Array(3) as _}
-      <div class="rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] p-4">
-        <div class="space-y-3">
-          <Skeleton variant="circle" class="h-10 w-10" />
-          <Skeleton lines={2} />
+  <!-- Posts Feed -->
+  <div class="space-y-8 mt-16">
+    {#if $postsList.length === 0}
+      <div class="max-w-[42rem] mx-auto bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-12 text-center text-white/60 animate-slideDown">
+        <svg class="w-12 h-12 mx-auto mb-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4"/>
+        </svg>
+        <p class="text-lg">No posts yet. Be the first to share your thoughts!</p>
+      </div>
+    {:else}
+      {#each $postsList as p, i (p.id)}
+        <div style="animation-delay: {i * 50}ms;" class="animate-slideDown">
+          <PostCard post={{ username: p.author?.username || 'Unknown', content: p.body, image: p.image_url || undefined, time: p.created_at, likes: 0, comments: 0 }} />
         </div>
-      </div>
-    {/each}
-  {:else if $posts.error && $postsList.length === 0}
-    <!-- Error State -->
-    <div class="rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] p-8 text-center">
-      <div class="mb-4">
-        <p class="font-semibold text-red-600 mb-2">Failed to load feed</p>
-        <p class="text-sm text-[color:var(--muted)] mb-4">{$posts.error}</p>
-        <p class="text-xs text-[color:var(--muted)]">Make sure the backend server is running on port 8080</p>
-      </div>
-      <Button variant="secondary" onclick={() => refreshFeed()}>
-        Try Again
-      </Button>
-    </div>
-  {:else if $postsList.length === 0}
-    <!-- Empty State -->
-    <div class="rounded-lg border border-[color:var(--border)] bg-[color:var(--card)] p-10 text-center">
-      <h2 class="mb-2 text-base font-semibold text-[color:var(--fg)]">No posts yet</h2>
-      <p class="text-sm text-[color:var(--muted)]">Be the first to share something.</p>
-    </div>
-  {:else}
-    <!-- Posts List -->
-    {#each $postsList as post (post.id)}
-      <PostCard {post} editable={post.author?.username === $user?.username} />
-    {/each}
-
-    <div bind:this={sentinel} class="h-1"></div>
-
-    {#if $postsLoading}
-      <div class="py-2 text-center text-sm text-[color:var(--muted)]">Loading…</div>
-    {:else if !$posts.hasMore}
-      <div class="py-2 text-center text-sm text-[color:var(--muted)]">You’re all caught up</div>
+      {/each}
     {/if}
-  {/if}
-</div>
+  </div>
+</main>
