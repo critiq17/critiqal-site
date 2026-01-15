@@ -66,6 +66,7 @@
       }).catch(() => {})
     }
   }
+</script>
 
 <article class="post-card">
   <div class="post-header">

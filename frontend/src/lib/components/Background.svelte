@@ -1,11 +1,25 @@
 <script lang="ts">
   import { theme } from '$lib/stores/theme'
-<<<<<<< HEAD
+  import { onMount } from 'svelte'
+  import { browser } from '$app/environment'
   
   $: isDark = $theme.mode === 'dark'
   $: palmColor = isDark ? 'rgba(59, 130, 246, 0.03)' : 'rgba(10, 15, 28, 0.04)'
   $: blobColor1 = isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.12)'
   $: blobColor2 = isDark ? 'rgba(124, 58, 237, 0.06)' : 'rgba(124, 58, 237, 0.10)'
+  
+  let flowerColor = '#ec4899'
+
+  // Trigger page transition animation
+  onMount(() => {
+    if (browser) {
+      const bg = document.querySelector('.tropical-background')
+      if (bg) {
+        bg.classList.add('page-transition')
+        setTimeout(() => bg?.classList.remove('page-transition'), 500)
+      }
+    }
+  })
 </script>
 
 <div class="background-container" aria-hidden="true">
@@ -64,27 +78,9 @@
       
       <!-- Small Palm Bottom Center -->
       <path d="M750,720 Q745,690 755,675 Q760,665 755,655 Q760,645 770,640 Q780,645 775,655 Q780,665 775,675 Q785,690 780,720 Z" opacity="0.3" />
-=======
-  import { onMount } from 'svelte'
-  import { browser } from '$app/environment'
-  
-  $: isDark = $theme.mode === 'dark'
-  $: palmColor = isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)'
-  $: flowerColor = isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)'
-  
-  // Trigger page transition animation
-  onMount(() => {
-    if (browser) {
-      const bg = document.querySelector('.tropical-background')
-      if (bg) {
-        bg.classList.add('page-transition')
-        setTimeout(() => bg?.classList.remove('page-transition'), 500)
-      }
-    }
-  })
-</script>
+    </g>
+  </svg>
 
-<div class="tropical-background" aria-hidden="true">
   <!-- Large Palm Tree Left -->
   <svg class="palm palm-left palm-sway" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
     <g fill={palmColor}>
@@ -193,12 +189,10 @@
       <circle cx="280" cy="180" r="6" opacity="0.14"/>
       <circle cx="290" cy="175" r="5" opacity="0.12"/>
       <circle cx="285" cy="190" r="4" opacity="0.1"/>
->>>>>>> dev
     </g>
   </svg>
 </div>
 
-<<<<<<< HEAD
 <style lang="css">
   .background-container {
     position: fixed;
@@ -206,6 +200,8 @@
     pointer-events: none;
     z-index: -1;
     overflow: hidden;
+    background: var(--bg);
+    transition: background-color 0.3s ease;
   }
 
   .background-blob {
@@ -235,16 +231,28 @@
     }
     66% {
       transform: translate(-15px, 10px) scale(0.95);
-=======
-<style>
-  .tropical-background {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-    background: var(--bg);
-    transition: background-color 0.3s ease;
+    }
+  }
+
+  @keyframes palm-sway {
+    0%, 100% {
+      transform: rotate(0deg);
+    }
+    25% {
+      transform: rotate(1deg);
+    }
+    75% {
+      transform: rotate(-1deg);
+    }
+  }
+
+  @keyframes flower-float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
   }
 
   /* Palm trees */
@@ -272,6 +280,10 @@
     transform-origin: bottom center;
   }
 
+  .palm-sway {
+    animation: palm-sway 4s ease-in-out infinite;
+  }
+
   /* Flowers */
   .flowers {
     position: absolute;
@@ -291,6 +303,10 @@
     bottom: 8%;
     height: 160px;
     width: auto;
+  }
+
+  .flower-float {
+    animation: flower-float 6s ease-in-out infinite;
   }
 
   /* Vines */
@@ -364,7 +380,6 @@
     .decorative-center,
     .vines-top {
       display: none;
->>>>>>> dev
     }
   }
 </style>

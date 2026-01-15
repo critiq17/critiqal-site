@@ -151,21 +151,13 @@ p {
 }
 
 a {
-<<<<<<< HEAD
-  color: var(--accent);
-=======
   color: var(--fg);
->>>>>>> dev
   text-decoration: none;
   transition: opacity var(--motion-fast) ease;
 }
 
 a:hover {
-<<<<<<< HEAD
-  opacity: 0.8;
-=======
   opacity: 0.7;
->>>>>>> dev
 }
 
 /* === Form Elements === */
@@ -211,21 +203,13 @@ input, textarea {
 
 /* === Selection === */
 ::selection {
-<<<<<<< HEAD
-  background: rgba(14, 165, 233, 0.2);
-=======
   background: rgba(45, 55, 72, 0.2);
->>>>>>> dev
   color: var(--fg);
 }
 
 /* === Focus Styles === */
 :focus-visible {
-<<<<<<< HEAD
-  outline: 2px solid var(--accent);
-=======
   outline: 2px solid var(--accent-start);
->>>>>>> dev
   outline-offset: 2px;
 }
 
@@ -236,58 +220,6 @@ input, textarea {
   white-space: nowrap;
 }
 
-<<<<<<< HEAD
-=======
-/* === Gradient Utilities === */
-.gradient-brutal {
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-}
-
-.gradient-secondary {
-  background: linear-gradient(135deg, var(--secondary-start), var(--secondary-end));
-}
-
->>>>>>> dev
-/* === Animations === */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-<<<<<<< HEAD
-=======
 @keyframes palmSway {
   0%, 100% {
     transform: rotate(-2deg);
@@ -321,7 +253,6 @@ input, textarea {
   }
 }
 
->>>>>>> dev
 .animate-fadeIn {
   animation: fadeIn var(--motion-regular) ease-out;
 }
@@ -338,144 +269,14 @@ input, textarea {
   animation: spin 1s linear infinite;
 }
 
-<<<<<<< HEAD
-=======
-.palm-sway {
-  animation: palmSway 4s ease-in-out infinite;
-}
-
-.flower-float {
-  animation: flowerFloat 6s ease-in-out infinite;
-}
-
-/* === Page Transitions === */
-.page-transition {
-  animation: pageTransition 0.5s ease-in-out;
-}
-
-/* === Markdown Support === */
-.markdown-content {
-  line-height: 1.7;
-}
-
-.markdown-content h1,
-.markdown-content h2,
-.markdown-content h3 {
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  font-weight: 700;
-}
-
-.markdown-content h1 {
-  font-size: 1.875rem;
-}
-
-.markdown-content h2 {
-  font-size: 1.5rem;
-}
-
-.markdown-content h3 {
-  font-size: 1.25rem;
-}
-
-.markdown-content p {
-  margin-bottom: 1rem;
-}
-
-.markdown-content ul,
-.markdown-content ol {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.markdown-content li {
-  margin-bottom: 0.5rem;
-}
-
-.markdown-content code {
-  padding: 0.125rem 0.25rem;
-  background: var(--bg-2);
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  font-family: 'Courier New', monospace;
-}
-
-.markdown-content pre {
-  padding: 1rem;
-  background: var(--bg-2);
-  border-radius: 0.5rem;
-  overflow-x: auto;
-  margin: 1rem 0;
-}
-
-.markdown-content pre code {
-  padding: 0;
-  background: transparent;
-}
-
-.markdown-content blockquote {
-  margin: 1rem 0;
-  padding-left: 1rem;
-  border-left: 4px solid var(--border);
-  color: var(--muted);
-  font-style: italic;
-}
-
-.markdown-content a {
-  color: var(--accent-start);
-  text-decoration: underline;
-}
-
-.markdown-content img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.5rem;
-  margin: 1rem 0;
-}
-
->>>>>>> dev
-/* === Screen Reader Only === */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* === Print Styles === */
-@media print {
-  body {
-    background: white;
-    color: black;
-  }
-  
-  nav,
-  .no-print {
-    display: none !important;
-  }
-}
-
-/* === High Contrast Mode === */
+/* === Contrast Preferences === */
 @media (prefers-contrast: high) {
   :root {
-<<<<<<< HEAD
-    --border: rgba(10, 15, 28, 0.2);
-  }
-  
-  :root.dark {
-    --border: rgba(255, 255, 255, 0.2);
-=======
     --border: rgba(0, 0, 0, 0.3);
   }
   
   :root.dark {
     --border: rgba(255, 255, 255, 0.3);
->>>>>>> dev
   }
 }
 

@@ -25,21 +25,12 @@
 
   const inputId = (props.id as string) || `input-${Math.random().toString(36).slice(2)}`
 
-<<<<<<< HEAD
-  const baseClasses = 'w-full px-4 py-2 border rounded-lg transition-colors duration-200 focus:outline-none'
-  const normalClasses = 'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--fg)] placeholder-[color:var(--muted)]'
-  const errorClasses = 'border-red-500 bg-red-50 dark:bg-red-950/20'
-  const focusClasses = 'focus:border-[color:var(--accent)] focus:ring-2 focus:ring-[color:var(--accent)]/20'
-
-  const classes = `${baseClasses} ${error ? errorClasses : normalClasses} ${focusClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`
-=======
   const baseClasses = 'w-full px-4 py-2 border rounded-lg transition-all duration-200 focus:outline-none'
   const normalClasses = 'border-[color:var(--border)] bg-[color:var(--card)] text-[color:var(--fg)] placeholder-[color:var(--muted)]'
   const errorClasses = 'border-red-500 bg-red-50 dark:bg-red-950/20'
   const focusClasses = 'focus:border-[color:var(--accent-start)] focus:ring-2 focus:ring-[color:var(--accent-start)]/20'
 
   const classes = $derived(`${baseClasses} ${error ? errorClasses : normalClasses} ${focusClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`)
->>>>>>> dev
 </script>
 
 <div class="w-full">
