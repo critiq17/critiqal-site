@@ -1,36 +1,108 @@
 <script lang="ts">
-  // Decorative background - blurred blobs + subtle palms
-  // Purely visual; pointer-events: none
+  import { theme } from '$lib/stores/theme'
+  
+  $: isDark = $theme.mode === 'dark'
+  $: palmColor = isDark ? 'rgba(59, 130, 246, 0.03)' : 'rgba(10, 15, 28, 0.04)'
+  $: blobColor1 = isDark ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.12)'
+  $: blobColor2 = isDark ? 'rgba(124, 58, 237, 0.06)' : 'rgba(124, 58, 237, 0.10)'
 </script>
 
-<div class="app-background" aria-hidden="true">
-  <!-- decorative blobs -->
-  <svg class="background-blob" style="width:900px; height:500px; left: -10%; top: -8%;" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+<div class="background-container" aria-hidden="true">
+  <!-- Gradient Blobs -->
+  <svg class="background-blob" style="width:900px; height:600px; left: -5%; top: -10%;" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="g1" x1="0" x2="1">
-        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45" />
-        <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.45" />
+      <linearGradient id="blob1" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color={blobColor1} />
+        <stop offset="100%" stop-color={blobColor2} />
       </linearGradient>
     </defs>
-    <ellipse cx="300" cy="200" rx="420" ry="220" fill="url(#g1)" />
+    <ellipse cx="400" cy="280" rx="450" ry="280" fill="url(#blob1)" />
   </svg>
 
-  <svg class="background-blob" style="width:700px; height:420px; right: -8%; top: 30%;" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+  <svg class="background-blob" style="width:800px; height:500px; right: -8%; top: 40%;" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="g2" x1="0" x2="1">
-        <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.36" />
-        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.36" />
+      <linearGradient id="blob2" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color={blobColor2} />
+        <stop offset="100%" stop-color={blobColor1} />
       </linearGradient>
     </defs>
-    <path d="M40,200 C120,40 400,20 620,80 C680,100 720,220 620,300 C420,370 160,320 40,260 Z" fill="url(#g2)" />
+    <path d="M50,200 C150,50 450,30 700,100 C750,130 800,250 700,350 C500,450 200,380 50,280 Z" fill="url(#blob2)" />
   </svg>
 
-  <!-- very subtle palm silhouettes -->
-  <svg class="background-palms" width="1400" height="400" viewBox="0 0 1400 400" xmlns="http://www.w3.org/2000/svg">
-    <g fill="#24324a" transform="translate(0,40)">
-      <path d="M120 160 C160 60 220 40 280 80 C340 120 360 160 320 200 C260 260 160 240 120 200 C80 160 80 140 120 160 Z" opacity="0.12" />
-      <path d="M380 160 C420 60 480 40 540 80 C600 120 620 160 580 200 C520 260 420 240 380 200 C340 160 340 140 380 160 Z" opacity="0.08" />
-      <path d="M980 160 C1020 60 1080 40 1140 80 C1200 120 1220 160 1180 200 C1120 260 1020 240 980 200 C940 160 940 140 980 160 Z" opacity="0.06" />
+  <!-- Palm and Tropical Silhouettes -->
+  <svg class="tropical-silhouettes" width="100%" height="100%" viewBox="0 0 1600 800" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <g fill={palmColor}>
+      <!-- Palm Tree Left -->
+      <path d="M150,600 Q140,550 155,520 Q165,490 150,460 Q160,420 180,400 Q200,420 190,460 Q205,490 185,520 Q195,550 180,600 Z" opacity="0.5" />
+      <path d="M150,600 Q160,550 145,520 Q135,490 150,460 Q140,420 120,400 Q100,420 110,460 Q95,490 115,520 Q105,550 120,600 Z" opacity="0.4" />
+      <ellipse cx="150" cy="605" rx="8" ry="5" opacity="0.6" />
+      
+      <!-- Palm Fronds Spreading Left -->
+      <path d="M150,410 Q100,380 60,390 Q40,400 50,420 Q80,430 120,420" opacity="0.35" />
+      <path d="M150,410 Q200,380 240,390 Q260,400 250,420 Q220,430 180,420" opacity="0.35" />
+      
+      <!-- Coconuts Left -->
+      <ellipse cx="140" cy="425" rx="8" ry="10" opacity="0.25" />
+      <ellipse cx="160" cy="420" rx="7" ry="9" opacity="0.25" />
+
+      <!-- Palm Tree Right -->
+      <path d="M1400,650 Q1390,600 1405,570 Q1415,540 1400,510 Q1410,470 1430,450 Q1450,470 1440,510 Q1455,540 1435,570 Q1445,600 1430,650 Z" opacity="0.4" />
+      <path d="M1400,650 Q1410,600 1395,570 Q1385,540 1400,510 Q1390,470 1370,450 Q1350,470 1360,510 Q1345,540 1365,570 Q1355,600 1370,650 Z" opacity="0.3" />
+      <ellipse cx="1400" cy="655" rx="8" ry="5" opacity="0.5" />
+
+      <!-- Additional Tropical Leaves Center -->
+      <path d="M800,250 Q750,220 720,240 Q700,260 720,280 Q760,290 800,270" opacity="0.2" />
+      <path d="M800,250 Q850,220 880,240 Q900,260 880,280 Q840,290 800,270" opacity="0.2" />
+
+      <!-- Small Coconut Cluster Center -->
+      <ellipse cx="790" cy="265" rx="6" ry="8" opacity="0.15" />
+      <ellipse cx="810" cy="268" rx="5" ry="7" opacity="0.15" />
+      
+      <!-- Jungle Leaf Bottom Right -->
+      <path d="M1200,700 Q1150,680 1130,710 Q1120,740 1145,755 Q1180,765 1210,745" opacity="0.25" />
+      
+      <!-- Small Palm Bottom Center -->
+      <path d="M750,720 Q745,690 755,675 Q760,665 755,655 Q760,645 770,640 Q780,645 775,655 Q780,665 775,675 Q785,690 780,720 Z" opacity="0.3" />
     </g>
   </svg>
 </div>
+
+<style>
+  .background-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .background-blob {
+    position: absolute;
+    filter: blur(80px) saturate(150%);
+    opacity: 1;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  .background-blob:nth-child(2) {
+    animation: float 25s ease-in-out infinite reverse;
+  }
+
+  .tropical-silhouettes {
+    position: absolute;
+    inset: 0;
+    filter: blur(2px);
+    opacity: 1;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(20px, -15px) scale(1.05);
+    }
+    66% {
+      transform: translate(-15px, 10px) scale(0.95);
+    }
+  }
+</style>
