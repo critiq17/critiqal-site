@@ -1,14 +1,11 @@
-<script lang="ts">
-  /**
-   * Button Component
-   * Type-safe, accessible button with loading state
-   */
+<script lang="ts" context="module">
+  export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
+  export type ButtonSize = 'sm' | 'md' | 'lg'
+</script>
 
+<script lang="ts">
   import type { Snippet } from 'svelte'
   import type { SvelteHTMLElements } from 'svelte/elements'
-
-  type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
-  type ButtonSize = 'sm' | 'md' | 'lg'
 
   interface $$Props extends Omit<SvelteHTMLElements['button'], 'type' | 'class'> {
     variant?: ButtonVariant
@@ -31,17 +28,13 @@
     ...props
   }: $$Props = $props()
 
-  const baseClasses =
-    'font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[color:var(--bg)]'
+  const baseClasses = 'font-semibold rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none'
 
   const variantClasses: Record<ButtonVariant, string> = {
-    primary:
-      'bg-[color:var(--accent-color)] text-white hover:opacity-90 focus:ring-[color:var(--accent-color)]',
-    secondary:
-      'bg-[color:var(--card)] border border-[color:var(--border)] text-[color:var(--fg)] hover:opacity-90 focus:ring-[color:var(--accent-color)]',
-    danger: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-400',
-    ghost:
-      'text-[color:var(--fg)] hover:bg-gray-100/60 dark:hover:bg-white/10 focus:ring-[color:var(--accent-color)]'
+    primary: 'bg-gradient-to-r from-[#0EA5E9] to-[#6366F1] text-white hover:opacity-90',
+    secondary: 'bg-[color:var(--card)] border border-[color:var(--border)] text-[color:var(--fg)] hover:bg-[color:var(--bg-2)]',
+    danger: 'bg-[color:var(--danger)] text-white hover:opacity-90',
+    ghost: 'text-[color:var(--fg)] hover:bg-[color:var(--bg-2)]'
   }
 
   const sizeClasses: Record<ButtonSize, string> = {

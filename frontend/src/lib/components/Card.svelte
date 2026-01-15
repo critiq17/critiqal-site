@@ -1,9 +1,4 @@
 <script lang="ts">
-  /**
-   * Card Component
-   * Reusable container with optional header and footer
-   */
-
   import type { Snippet } from 'svelte'
 
   interface $$Props {
