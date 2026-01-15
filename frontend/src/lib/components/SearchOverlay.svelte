@@ -1,255 +1,399 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import { fade, scale } from 'svelte/transition'
-  import { debounce } from '$lib/utils/helpers'
   import * as usersService from '$lib/services/users'
-  import type { User } from '$lib/types'
-
-  interface $$Props {
-    open: boolean
-    onClose: () => void
-  }
-
-  let { open, onClose }: $$Props = $props()
+  
+  export let show: boolean = false
+  export let onClose: () => void = () => {}
 
   let query = $state('')
-  let loading = $state(false)
-  let results = $state<User[]>([])
-  let error = $state<string | null>(null)
-  let selected = $state(-1)
-  let inputEl: HTMLInputElement | null = $state(null)
-  // Simple in-memory cache for search queries
-  const searchCache: Map<string, User[]> = new Map()
-  // Cached full user list for local filtering fallback
-  let allUsersCache: User[] | null = null
+  let results = $state<Array<{ username: string; bio?: string; email?: string }>>([])
+  let isSearching = $state(false)
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
-  const runSearch = debounce(async (q: string) => {
-    const trimmed = q.trim()
-    if (!trimmed) {
-      results = []
-      error = null
-      selected = -1
-      return
-    }
-
-    // Check cache first (exact match)
-    const key = trimmed.toLowerCase()
-    if (searchCache.has(key)) {
-      results = searchCache.get(key) || []
-      selected = results.length > 0 ? 0 : -1
-      return
-    }
-
-    loading = true
-    error = null
-
-    try {
-      // Try server-side search first
-      const serverResults = await usersService.searchUsers(trimmed)
-      results = serverResults
-      // Cache by exact query
-      searchCache.set(key, serverResults)
-      selected = results.length > 0 ? 0 : -1
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      // If server search endpoint not available or returned 404, fall back to client-side filter
-      if (message.includes('404') || message.toLowerCase().includes('not found') || message.toLowerCase().includes('failed to fetch')) {
-        try {
-          if (!allUsersCache) {
-            // fetch all users once
-            allUsersCache = await usersService.getAllUsers()
-          }
-          const lower = trimmed.toLowerCase()
-          const filtered = (allUsersCache || []).filter((u) => {
-            return (
-              u.username?.toLowerCase().includes(lower) ||
-              u.first_name?.toLowerCase().includes(lower) ||
-              u.last_name?.toLowerCase().includes(lower) ||
-              (u.email || '').toLowerCase().includes(lower)
-            )
-          })
-          results = filtered.slice(0, 50)
-          searchCache.set(key, results)
-          selected = results.length > 0 ? 0 : -1
-          error = null
-        } catch (localErr) {
-          error = 'Search currently unavailable'
-          results = []
-          selected = -1
-        }
-      } else {
-        error = message
-        results = []
-        selected = -1
-      }
-    } finally {
-      loading = false
-    }
-  }, 200)
-
-  $effect(() => {
-    if (!open) return
-    if (typeof window === 'undefined') return
-
-    // focus input and reset query on open
-    setTimeout(() => inputEl?.focus(), 30)
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        if (results.length === 0) return
-        selected = Math.min(selected + 1, results.length - 1)
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        if (results.length === 0) return
-        selected = Math.max(selected - 1, 0)
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        if (selected >= 0 && results[selected]) {
-          openProfile(results[selected].username)
-        } else if (results.length > 0) {
-          openProfile(results[0].username)
-        }
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  })
-
-  $effect(() => {
-    if (!open) return
-    runSearch(query)
-  })
-
-  function openProfile(username: string) {
+  function close() {
+    query = ''
+    results = []
     onClose()
-    goto(`/profile/${encodeURIComponent(username)}`).catch(console.error)
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') {
+      close()
+    }
+  }
+
+  // Search function with debounce
+  async function search(q: string) {
+    if (!q.trim()) {
+      results = []
+      return
+    }
+
+    isSearching = true
+    
+    try {
+      // Call actual API
+      const users = await usersService.searchUsersByUsername(q)
+      results = users
+    } catch (error) {
+      console.error('Search failed:', error)
+      results = []
+    } finally {
+      isSearching = false
+    }
+  }
+
+  // Watch query changes with debounce
+  $effect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout)
+    }
+
+    if (query) {
+      searchTimeout = setTimeout(() => {
+        search(query)
+      }, 300)
+    } else {
+      results = []
+    }
+  })
+
+  function navigateToProfile(username: string) {
+    close()
+    goto(`/profile/${username}`)
   }
 </script>
 
-{#if open}
-  <div class="fixed inset-0 z-50 flex items-start justify-center px-4 pt-20" role="dialog" aria-modal="true" aria-label="Search users">
-    <button type="button" class="absolute inset-0 bg-black/60" aria-label="Close search" onclick={onClose}></button>
-
-    <div in:scale={{ duration: 160, start: 0.98 }} class="relative z-10 w-full max-w-xl">
-      <div class="rounded-xl border border-[color:var(--bg-2)] bg-[color:var(--card)] p-4 shadow-md">
-        <div class="flex items-center gap-3">
-          <svg viewBox="0 0 24 24" class="h-5 w-5 text-[color:var(--muted)]" fill="none" stroke="currentColor" stroke-width="1.5">
-            <circle cx="11" cy="11" r="6" />
-            <path d="M21 21l-4.35-4.35" />
+{#if show}
+  <div 
+    class="search-overlay"
+    onclick={close}
+    onkeydown={handleKeydown}
+    role="dialog"
+    aria-modal="true"
+    aria-label="Search users"
+  >
+    <div 
+      class="search-dialog"
+      onclick={(e) => e.stopPropagation()}
+      role="document"
+    >
+      <!-- Search Header -->
+      <div class="search-header">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="6" />
+          <path d="M21 21l-4.35-4.35" />
+        </svg>
+        
+        <input 
+          type="text" 
+          placeholder="Search users..."
+          class="search-input"
+          bind:value={query}
+          autofocus
+        />
+        
+        <button 
+          type="button"
+          class="close-btn"
+          onclick={close}
+          aria-label="Close search"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
+        </button>
+      </div>
 
-          <input
-            bind:this={inputEl}
-            aria-label="Search users"
-            class="w-full bg-transparent text-sm text-[color:var(--fg)] placeholder-[color:var(--muted)] outline-none"
-            placeholder="Search by username or name — Press Enter to open"
-            value={query}
-            oninput={(e: Event) => (query = (e.target as HTMLInputElement).value)}
-            autocomplete="off"
-          />
-
-          <div class="ml-2 text-xs text-[color:var(--muted)]">Esc to close</div>
-        </div>
-
-        <div class="mt-3 max-h-64 overflow-y-auto rounded-md">
-      <style>
-        /* selected state styles scoped to this component */
-        :global(.selected) {
-          background-color: var(--bg-2);
-          border-radius: 8px;
-          box-shadow: 0 6px 20px rgba(59,130,246,0.07);
-          transform: translateY(-1px);
-        }
-        :global(.selected) > button, :global(.selected) {
-          border-radius: 8px;
-        }
-        :global(.selected) .selected-badge {
-          display: inline-flex;
-        }
-        /* keyboard kbd */
-        kbd {
-          font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-          padding: 0.12rem 0.36rem;
-          border-radius: 6px;
-          border: 1px solid rgba(255,255,255,0.04);
-          background: rgba(255,255,255,0.02);
-        }
-      </style>
-          {#if loading}
-            <div class="p-4 text-sm text-[color:var(--muted)]">Searching…</div>
-          {:else if error}
-            <div class="p-4 text-sm text-red-600">{error}</div>
-          {:else if query.trim() && results.length === 0}
-            <div class="p-4 text-sm text-[color:var(--muted)]">No users found</div>
-          {:else if query.trim()}
-            <ul role="listbox" tabindex="0" class="divide-y divide-[color:var(--bg-2)]" aria-activedescendant={results[selected]?.id ? `search-result-${results[selected].id}` : undefined}>
-              {#each results as user, i (user.id)}
-                <li role="option" aria-selected={i === selected} id={`search-result-${user.id}`}>
-                  <button
-                    type="button"
-                    class="flex w-full items-center gap-3 px-3 py-2 text-left transition-colors focus:outline-none"
-                    class:selected={i === selected}
-                    onmouseenter={() => (selected = i)}
-                    onclick={() => openProfile(user.username)}
-                    onkeydown={(e: KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') openProfile(user.username)
-                    }}
-                    aria-label={`Open profile ${user.username}`}
-                  >
-                    <div class="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-[color:var(--border)] bg-gradient-to-br from-blue-400 to-purple-500">
-                      {#if user.photo_url}
-                        <img src={user.photo_url} alt={user.username} class="h-full w-full object-cover" loading="lazy" decoding="async" />
-                      {:else}
-                        <div class="flex h-full w-full items-center justify-center text-sm font-semibold text-white">{user.username?.[0]?.toUpperCase() ?? '?'}</div>
-                      {/if}
-                    </div>
-
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2">
-                        <div class="truncate text-sm font-semibold text-[color:var(--fg)]">{user.username}</div>
-                        {#if user.first_name || user.last_name}
-                          <div class="truncate text-xs text-[color:var(--muted)]">{user.first_name} {user.last_name}</div>
-                        {/if}
-                      </div>
-                      {#if user.bio}
-                        <div class="truncate text-xs text-[color:var(--muted)] mt-1">{user.bio}</div>
-                      {/if}
-                    </div>
-
-                    <div class="ml-3">
-                      {#if i === selected}
-                        <div class="h-8 w-8 rounded-md bg-[color:var(--accent)]/18 flex items-center justify-center text-[color:var(--accent)]">↵</div>
-                      {/if}
-                    </div>
-                  </button>
-                </li>
-              {/each}
-            </ul>
-
-            <!-- Keyboard hint footer -->
-            <div class="mt-2 flex items-center justify-between text-xs text-[color:var(--muted)] px-2">
-              <div class="flex items-center gap-2">
-                <span>Press</span>
-                <kbd class="rounded border px-2 py-0.5 bg-[color:var(--bg-2)]">Enter</kbd>
-                <span>to open</span>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <span class="hidden sm:inline">Tip:</span>
-                <div class="flex items-center gap-1">
-                  <kbd class="rounded border px-2 py-0.5 bg-[color:var(--bg-2)]">⌘</kbd>
-                  <span>+</span>
-                  <kbd class="rounded border px-2 py-0.5 bg-[color:var(--bg-2)]">K</kbd>
+      <!-- Results -->
+      <div class="results-container">
+        {#if isSearching}
+          <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Searching...</p>
+          </div>
+        {:else if query && results.length === 0}
+          <div class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <p>No users found for "{query}"</p>
+          </div>
+        {:else if results.length > 0}
+          <div class="results-list">
+            {#each results as result}
+              <button 
+                type="button"
+                class="result-item"
+                onclick={() => navigateToProfile(result.username)}
+              >
+                <div class="result-avatar">
+                  {result.username[0].toUpperCase()}
                 </div>
-              </div>
-            </div>
-          {/if}
-        </div>
+                <div class="result-info">
+                  <h4 class="result-username">@{result.username}</h4>
+                  {#if result.bio}
+                    <p class="result-bio">{result.bio}</p>
+                  {:else if result.email}
+                    <p class="result-bio">{result.email}</p>
+                  {/if}
+                </div>
+                <svg class="result-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            {/each}
+          </div>
+        {:else}
+          <div class="empty-state">
+            <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+            </svg>
+            <p>Start typing to search users</p>
+          </div>
+        {/if}
+      </div>
+
+      <!-- Footer hint -->
+      <div class="search-footer">
+        <kbd>ESC</kbd> to close
       </div>
     </div>
   </div>
 {/if}
+
+<style>
+  .search-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 6rem 1rem 4rem; /* Add top padding to avoid navbar */
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  .search-dialog {
+    width: 100%;
+    max-width: 38rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-lg);
+    animation: slideDown 0.2s ease-out;
+  }
+
+  .search-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--fg);
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: inherit;
+  }
+
+  .search-input::placeholder {
+    color: var(--muted);
+  }
+
+  .close-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  .close-btn:hover {
+    color: var(--fg);
+    background: var(--bg-2);
+  }
+
+  .close-btn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .results-container {
+    max-height: 24rem;
+    overflow-y: auto;
+  }
+
+  .loading-state,
+  .empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--fg);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  .empty-icon {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1rem;
+    color: var(--muted);
+    opacity: 0.5;
+  }
+
+  .results-list {
+    padding: 0.5rem;
+  }
+
+  .result-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-radius: 0.75rem;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .result-item:hover {
+    background: var(--bg-2);
+  }
+
+  .result-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-start), var(--secondary-end));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  .result-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .result-username {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--fg);
+    margin: 0 0 0.125rem 0;
+  }
+
+  .result-bio {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .result-arrow {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .search-footer {
+    padding: 0.875rem 1.5rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--muted);
+  }
+
+  kbd {
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .search-overlay {
+      padding: 5rem 1rem 2rem;
+    }
+
+    .search-dialog {
+      border-radius: 1rem;
+    }
+
+    .search-header {
+      padding: 1rem 1.25rem;
+    }
+  }
+</style>
