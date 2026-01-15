@@ -56,6 +56,11 @@
       handleSignUp()
     }
   }
+
+  function handleFormSubmit(e: Event) {
+    e.preventDefault()
+    handleSignUp()
+  }
 </script>
 
 <svelte:head>
@@ -69,7 +74,7 @@
       <p class="auth-subtitle">Join Critiqal today</p>
     </div>
 
-    <form class="auth-form" on:submit|preventDefault={handleSignUp}>
+    <form class="auth-form" onsubmit={handleFormSubmit}>
       <div class="form-group">
         <label for="username" class="form-label">Username</label>
         <input

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
   export type ButtonSize = 'sm' | 'md' | 'lg'
 </script>
@@ -43,7 +43,7 @@
     lg: 'px-6 py-3 text-lg'
   }
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`
+  const classes = $derived(`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`)
 </script>
 
 <button

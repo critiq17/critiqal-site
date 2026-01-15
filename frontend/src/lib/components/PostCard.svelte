@@ -1,18 +1,19 @@
 <script lang="ts">
   import { marked } from 'marked'
   
-  export let post: { 
-    id?: string
-    username: string
-    content: string
-    image?: string
-    time?: string
-    likes?: number
-    comments?: number
-  }
-  
-  export let showDelete = false // Only show in profile
-  export let onDelete: (() => void) | undefined = undefined
+  const { post, showDelete = false, onDelete } = $props<{
+    post: { 
+      id?: string
+      username: string
+      content: string
+      image?: string
+      time?: string
+      likes?: number
+      comments?: number
+    }
+    showDelete?: boolean
+    onDelete?: (() => void) | undefined
+  }>()
 
   let isLiked = $state(false)
   let localLikes = $state(post.likes ?? 0)
@@ -20,10 +21,10 @@
   let commentText = $state('')
 
   // Parse markdown
-  $: renderedContent = marked.parse(post.content, { 
+  const renderedContent = $derived(marked.parse(post.content, { 
     breaks: true,
     gfm: true 
-  })
+  }))
 
   function formatTime(time?: string): string {
     if (!time) return '2h'

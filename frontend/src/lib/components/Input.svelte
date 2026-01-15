@@ -30,7 +30,7 @@
   const errorClasses = 'border-red-500 bg-red-50 dark:bg-red-950/20'
   const focusClasses = 'focus:border-[color:var(--accent-start)] focus:ring-2 focus:ring-[color:var(--accent-start)]/20'
 
-  const classes = `${baseClasses} ${error ? errorClasses : normalClasses} ${focusClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`
+  const classes = $derived(`${baseClasses} ${error ? errorClasses : normalClasses} ${focusClasses} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`)
 </script>
 
 <div class="w-full">
