@@ -62,10 +62,12 @@ func getEnvInt(key string, defaultValue int) int {
 }
 
 func (db *DatabaseConfig) DSN() string {
-	dsn := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		db.Host, db.Port, db.User, db.Password, db.DB_Name, db.SSLMode,
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		db.Host,
+		db.Port,
+		db.User,
+		db.Password,
+		db.DB_Name,
+		db.SSLMode,
 	)
-
-	return dsn
 }
