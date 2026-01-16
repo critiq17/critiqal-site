@@ -29,9 +29,7 @@ type DatabaseConfig struct {
 }
 
 func LoadConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading .env file: %v", err)
-	}
+	godotenv.Load()
 
 	return &Config{
 		DatabaseConfig: DatabaseConfig{
