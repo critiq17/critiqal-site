@@ -49,7 +49,7 @@ func SetupApp() (*fiber.App, error) {
 
 	allowOrigins := normalizeCSV(os.Getenv("CORS_ALLOW_ORIGINS"))
 	if allowOrigins == "" {
-		allowOrigins = "http://localhost:5173,http://localhost:3001,http://localhost:81"
+		allowOrigins = "https://critiqal.vercel.app"
 	}
 
 	allowHeaders := os.Getenv("CORS_ALLOW_HEADERS")
