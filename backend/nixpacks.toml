@@ -5,7 +5,7 @@ cmds = [
 ]
 
 [phases.setup]
-nixPkgs = ['go_1_21_13']
+nixPkgs = ['go_1_24_0']
 
 [start]
 cmd = './main'
