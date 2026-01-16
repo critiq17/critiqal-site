@@ -9,8 +9,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type Server struct {
+	PORT string
+}
+
 type Config struct {
 	DatabaseConfig DatabaseConfig
+	Server         Server
 }
 
 type DatabaseConfig struct {
@@ -37,6 +42,9 @@ func LoadConfig() *Config {
 			Password: os.Getenv("DB_PASSWORD"),
 			Database: os.Getenv("DB_NAME"),
 			SSLMode:  os.Getenv("DB_SSL_MODE"),
+		},
+		Server: Server{
+			PORT: os.Getenv("HTTP_PORT"),
 		},
 	}
 }

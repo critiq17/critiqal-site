@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/critiq17/critiqal-site/config"
 	_ "github.com/critiq17/critiqal-site/docs"
 	"github.com/critiq17/critiqal-site/internal/app"
 )
@@ -15,11 +16,12 @@ import (
 // @schemes http
 func main() {
 
-	// run init server and DB
+	cfg := config.LoadConfig()
 	app, err := app.SetupApp()
 	if err != nil {
-		log.Fatalf("Error setup app")
+		log.Fatal("Error setup app: ", err)
 	}
 
-	app.Listen(":8080")
+	log.Println("Starting on port: " + cfg.Server.PORT)
+	app.Listen(":" + cfg.Server.PORT)
 }
