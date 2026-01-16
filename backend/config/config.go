@@ -44,7 +44,7 @@ func LoadConfig() *Config {
 			SSLMode:  os.Getenv("DB_SSL_MODE"),
 		},
 		Server: Server{
-			PORT: os.Getenv("HTTP_PORT"),
+			PORT: os.Getenv("PORT"),
 		},
 	}
 }
